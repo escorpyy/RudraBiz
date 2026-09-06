@@ -7,72 +7,402 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============================================================
+// ENUMS
+// ============================================================
+
 enum AccountType {
-  ASSETS
-  LIABILITIES
-  CAPITAL
-  INCOME
-  EXPENSES
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
 }
 
-enum RecordStatus {
-  ACTIVE
-  INACTIVE
+enum NormalBalance {
+  DEBIT
+  CREDIT
 }
 
-// An Account Group is a category under an Account Type.
-// e.g. Account Type "Assets" -> Group "Current Assets"
+enum GLType {
+  CUSTOMER
+  VENDOR
+  BOTH
+  OTHER
+}
+
+enum AuditAction {
+  INSERT
+  UPDATE
+  DELETE
+}
+
+enum DocumentType {
+  CASH_BANK_VOUCHER
+  JOURNAL_VOUCHER
+  SALES_INVOICE
+  PURCHASE_BILL
+}
+
+enum InstrumentType {
+  CHEQUE
+  RTGS
+  ONLINE_TRANSFER
+  OTHER
+}
+
+// ============================================================
+// CHART OF ACCOUNTS
+// ============================================================
+
 model AccountGroup {
-  id          String       @id @default(cuid())
-  code        String       @unique
-  name        String
-  accountType AccountType
-  description String?
-  order       Int          @default(0)
-  status      RecordStatus @default(ACTIVE)
+  id          Int         @id @default(autoincrement())
+  code        String      @unique @db.VarChar(10)
+  description String      @unique @db.VarChar(50)
+  type        AccountType
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
-  subGroups SubGroup[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([accountType])
-  @@map("account_groups")
+  subGroups   AccountSubGroup[]
 }
 
-// A Sub-Group belongs to a Group. e.g. Group "Current Assets" -> Sub-Group "Inventory"
-model SubGroup {
-  id             String       @id @default(cuid())
-  code           String?      @unique
-  name           String
-  order          Int          @default(0)
-  status         RecordStatus @default(ACTIVE)
+model AccountSubGroup {
+  id             Int          @id @default(autoincrement())
+  code           String       @db.VarChar(10)
+  description    String       @db.VarChar(50)
+  accountGroupId Int
+  accountGroup   AccountGroup @relation(fields: [accountGroupId], references: [id], onDelete: Restrict)
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
-  accountGroupId String
-  accountGroup   AccountGroup @relation(fields: [accountGroupId], references: [id], onDelete: Cascade)
+  generalLedgers GeneralLedger[]
 
-  ledgers Ledger[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([accountGroupId])
-  @@map("sub_groups")
+  @@unique([accountGroupId, code])
+  @@unique([accountGroupId, description])
 }
 
-// A Ledger is the actual account. e.g. Sub-Group "Inventory" -> Ledger "ABC Company"
-model Ledger {
-  id         String       @id @default(cuid())
-  code       String?      @unique
-  name       String
-  status     RecordStatus @default(ACTIVE)
+// ============================================================
+// GENERAL LEDGER (formerly "Account")
+// ============================================================
 
-  subGroupId String
-  subGroup   SubGroup @relation(fields: [subGroupId], references: [id], onDelete: Cascade)
+model GeneralLedger {
+  id                Int             @id @default(autoincrement())
+  code              String          @unique @db.VarChar(20)
+  name              String          @db.VarChar(100)
+  accountSubGroupId Int
+  accountSubGroup   AccountSubGroup @relation(fields: [accountSubGroupId], references: [id], onDelete: Restrict)
+  normalBalance     NormalBalance
+  glType            GLType          @default(OTHER)
 
+  parentId          Int?
+  parent            GeneralLedger?  @relation("GLHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children          GeneralLedger[] @relation("GLHierarchy")
+
+  isCashOrBank      Boolean         @default(false)
+  postsToCashBook   Boolean         @default(false)
+  requiresSubLedger Boolean         @default(false)
+  allowDocAdjust    Boolean         @default(false)
+  isActive          Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  party             Party?
+
+  subAreaId         Int?
+  subArea           SubArea?        @relation(fields: [subAreaId], references: [id], onDelete: SetNull)
+  agentId           Int?
+  agent             Agent?          @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  // Dimension tables (Cash Flow, Working Capital, Cost Behavior, Decision Areas)
+  // are intentionally paused — they depend on JournalEntry/JournalLine
+  // existing first. Revisit after the transactional core is built.
+
+  journalVoucherLines  JournalVoucherLine[]
+  cashBankVoucherLines CashBankVoucherLine[]
+
+  @@index([accountSubGroupId])
+  @@index([parentId])
+  @@index([glType])
+  @@index([subAreaId])
+  @@index([agentId])
+}
+
+// ============================================================
+// AREA & SUB AREA (final)
+// Area is the top-level region; SubArea is the level that
+// GeneralLedger/Party actually tag against — same Group/SubGroup
+// pattern as the Chart of Accounts. Agent is a separate,
+// independent lookup (DRAFT — full 5-category pass not yet done).
+// ============================================================
+
+model Area {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique @db.VarChar(10)
+  name      String   @unique @db.VarChar(50)
+  shortName String   @unique @db.VarChar(10)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([subGroupId])
-  @@map("ledgers")
+  subAreas  SubArea[]
+}
+
+model SubArea {
+  id        Int      @id @default(autoincrement())
+  code      String   @db.VarChar(10)
+  name      String   @db.VarChar(50)
+  shortName String   @db.VarChar(10)
+  areaId    Int
+  area      Area     @relation(fields: [areaId], references: [id], onDelete: Restrict)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  generalLedgers GeneralLedger[]
+  parties        Party[]
+
+  @@unique([areaId, code])
+  @@unique([areaId, name])
+  @@unique([areaId, shortName])
+}
+
+model Agent {
+  id             Int             @id @default(autoincrement())
+  code           String          @unique @db.VarChar(10)
+  name           String          @db.VarChar(100)
+  phone          String?         @db.VarChar(25)
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  generalLedgers GeneralLedger[]
+  parties        Party[]
+  journalVoucherLines  JournalVoucherLine[]
+  cashBankVoucherLines CashBankVoucherLine[]
+}
+
+// ============================================================
+// PARTY (DRAFT — full 5-category pass not yet done)
+// ============================================================
+
+model Party {
+  id                Int             @id @default(autoincrement())
+  generalLedgerId   Int             @unique
+  generalLedger     GeneralLedger   @relation(fields: [generalLedgerId], references: [id], onDelete: Cascade)
+
+  address           String?         @db.VarChar(255)
+  city              String?         @db.VarChar(50)
+  state             String?         @db.VarChar(50)
+  country           String?         @db.VarChar(50)
+  phone             String?         @db.VarChar(25)
+  mobile            String?         @db.VarChar(15)
+  email             String?         @db.VarChar(255)
+  contactPerson     String?         @db.VarChar(50)
+
+  panNo             String?         @unique @db.VarChar(25)
+  isVatRegistered   Boolean         @default(false)
+
+  bankReconcileDate DateTime?
+
+  subAreaId         Int?
+  subArea           SubArea?        @relation(fields: [subAreaId], references: [id], onDelete: SetNull)
+  agentId           Int?
+  agent             Agent?          @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  customerDetail    CustomerDetail?
+  vendorDetail      VendorDetail?
+
+  @@index([panNo])
+  @@index([subAreaId])
+  @@index([agentId])
+}
+
+model CustomerDetail {
+  id          Int      @id @default(autoincrement())
+  partyId     Int      @unique
+  party       Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+
+  creditLimit Decimal? @db.Decimal(18, 6)
+  creditDays  Int?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model VendorDetail {
+  id              Int      @id @default(autoincrement())
+  partyId         Int      @unique
+  party           Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+
+  paymentTermDays Int?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ============================================================
+// JOURNAL VOUCHER (non-cash/bank entries)
+// ============================================================
+
+model JournalVoucher {
+  id            Int                  @id @default(autoincrement())
+  documentType  DocumentType         @default(JOURNAL_VOUCHER)
+  voucherNumber String               @unique @db.VarChar(30)
+  voucherDate   DateTime             @db.Date
+  fiscalYear    String               @db.VarChar(15)
+  remarks       String?              @db.VarChar(1024)
+
+  reversalOfId  Int?
+  reversalOf    JournalVoucher?      @relation("JVReversal", fields: [reversalOfId], references: [id], onDelete: SetNull)
+  reversedBy    JournalVoucher[]     @relation("JVReversal")
+
+  isPosted      Boolean              @default(false)
+  postedAt      DateTime?
+  postedBy      Int?
+  postedByUser  User?                @relation("JVPostedBy", fields: [postedBy], references: [id], onDelete: SetNull)
+
+  createdBy     Int?
+  createdByUser User?                @relation("JVCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  lines         JournalVoucherLine[]
+
+  @@index([documentType])
+  @@index([fiscalYear])
+}
+
+model JournalVoucherLine {
+  id               Int            @id @default(autoincrement())
+  journalVoucherId Int
+  journalVoucher   JournalVoucher @relation(fields: [journalVoucherId], references: [id], onDelete: Cascade)
+
+  lineNumber       Int
+  generalLedgerId  Int
+  generalLedger    GeneralLedger  @relation(fields: [generalLedgerId], references: [id], onDelete: Restrict)
+
+  debit            Decimal        @default(0) @db.Decimal(18, 6)
+  credit           Decimal        @default(0) @db.Decimal(18, 6)
+  narration        String?        @db.VarChar(500)
+
+  agentId          Int?
+  agent            Agent?         @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  createdAt        DateTime       @default(now())
+
+  @@unique([journalVoucherId, lineNumber])
+  @@index([generalLedgerId])
+  @@index([agentId])
+}
+
+// ============================================================
+// CASH / BANK VOUCHER (cash and bank-touching entries)
+// ============================================================
+
+model CashBankVoucher {
+  id            Int                    @id @default(autoincrement())
+  documentType  DocumentType           @default(CASH_BANK_VOUCHER)
+  voucherNumber String                 @unique @db.VarChar(30)
+  voucherDate   DateTime               @db.Date
+  fiscalYear    String                 @db.VarChar(15)
+  remarks       String?                @db.VarChar(1024)
+
+  reversalOfId  Int?
+  reversalOf    CashBankVoucher?       @relation("CBReversal", fields: [reversalOfId], references: [id], onDelete: SetNull)
+  reversedBy    CashBankVoucher[]      @relation("CBReversal")
+
+  isPosted      Boolean                @default(false)
+  postedAt      DateTime?
+  postedBy      Int?
+  postedByUser  User?                  @relation("CBPostedBy", fields: [postedBy], references: [id], onDelete: SetNull)
+
+  createdBy     Int?
+  createdByUser User?                  @relation("CBCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  lines         CashBankVoucherLine[]
+
+  @@index([documentType])
+  @@index([fiscalYear])
+}
+
+model CashBankVoucherLine {
+  id                Int              @id @default(autoincrement())
+  cashBankVoucherId Int
+  cashBankVoucher   CashBankVoucher  @relation(fields: [cashBankVoucherId], references: [id], onDelete: Cascade)
+
+  lineNumber        Int
+  generalLedgerId   Int
+  generalLedger     GeneralLedger    @relation(fields: [generalLedgerId], references: [id], onDelete: Restrict)
+
+  debit             Decimal          @default(0) @db.Decimal(18, 6)
+  credit            Decimal          @default(0) @db.Decimal(18, 6)
+  narration         String?          @db.VarChar(500)
+
+  instrumentType    InstrumentType?
+  chequeNumber      String?          @db.VarChar(30)
+  chequeDate        DateTime?        @db.Date
+  chequeBankName    String?          @db.VarChar(50)
+  chequeBankBranch  String?          @db.VarChar(50)
+
+  isCleared         Boolean          @default(false)
+  clearedDate       DateTime?        @db.Date
+  clearedBy         Int?
+  clearedByUser     User?            @relation("CBLineClearedBy", fields: [clearedBy], references: [id], onDelete: SetNull)
+
+  agentId           Int?
+  agent             Agent?           @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  createdAt         DateTime         @default(now())
+
+  @@unique([cashBankVoucherId, lineNumber])
+  @@index([generalLedgerId])
+  @@index([agentId])
+  @@index([chequeNumber])
+}
+
+// ============================================================
+// USER (minimal — referenced by AuditLog)
+// ============================================================
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(100)
+  email     String   @unique @db.VarChar(255)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  auditLogs             AuditLog[]
+  journalVouchersPosted  JournalVoucher[]      @relation("JVPostedBy")
+  journalVouchersCreated JournalVoucher[]      @relation("JVCreatedBy")
+  cashBankVouchersPosted  CashBankVoucher[]     @relation("CBPostedBy")
+  cashBankVouchersCreated CashBankVoucher[]     @relation("CBCreatedBy")
+  cashBankLinesCleared    CashBankVoucherLine[] @relation("CBLineClearedBy")
+}
+
+// ============================================================
+// AUDIT LOG (generic, DB-trigger based)
+// ============================================================
+
+model AuditLog {
+  id        BigInt      @id @default(autoincrement())
+  tableName String      @db.VarChar(63)
+  recordId  String
+  action    AuditAction
+  oldData   Json?
+  newData   Json?
+  changedBy Int?
+  user      User?       @relation(fields: [changedBy], references: [id], onDelete: SetNull)
+  changedAt DateTime    @default(now())
+
+  @@index([tableName, recordId])
+  @@index([changedAt])
 }

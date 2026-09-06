@@ -9,23 +9,22 @@ export const dynamic = "force-dynamic";
 
 export default async function AccountGroupsPage() {
   const groups = await prisma.accountGroup.findMany({
-    orderBy: { order: "asc" },
+    orderBy: { code: "asc" },
     include: {
       subGroups: {
-        include: { _count: { select: { ledgers: true } } },
+        include: { _count: { select: { generalLedgers: true } } },
       },
     },
   });
 
   const rows: AccountGroupRow[] = groups.map((g) => ({
-    id: g.id,
+    id: String(g.id),
     code: g.code,
-    name: g.name,
-    accountType: g.accountType,
-    description: g.description,
+    name: g.description,
+    accountType: g.type,
     subGroupsCount: g.subGroups.length,
-    ledgersCount: g.subGroups.reduce((sum, sg) => sum + sg._count.ledgers, 0),
-    status: g.status,
+    ledgersCount: g.subGroups.reduce((sum, sg) => sum + sg._count.generalLedgers, 0),
+    status: g.isActive ? "ACTIVE" : "INACTIVE",
   }));
 
   const totalSubGroups = rows.reduce((sum, r) => sum + r.subGroupsCount, 0);

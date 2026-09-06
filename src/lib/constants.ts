@@ -16,7 +16,9 @@ import {
 } from "lucide-react";
 
 
-export type AccountType = "ASSETS" | "LIABILITIES" | "CAPITAL" | "INCOME" | "EXPENSES";
+// Matches the "AccountType" enum in prisma/schema.prisma.
+export type AccountType = "ASSET" | "LIABILITY" | "EQUITY" | "REVENUE" | "EXPENSE";
+// UI-only concept, derived from the schema's `isActive` boolean.
 export type RecordStatus = "ACTIVE" | "INACTIVE";
 
 // Display label + color tokens for each account type badge/icon, used on
@@ -25,11 +27,11 @@ export const ACCOUNT_TYPES: Record<
   AccountType,
   { label: string; badge: string; dot: string }
 > = {
-  ASSETS: { label: "Assets", badge: "bg-blue-50 text-blue-700", dot: "bg-blue-500" },
-  LIABILITIES: { label: "Liabilities", badge: "bg-amber-50 text-amber-700", dot: "bg-amber-500" },
-  CAPITAL: { label: "Capital", badge: "bg-violet-50 text-violet-700", dot: "bg-violet-500" },
-  INCOME: { label: "Income", badge: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
-  EXPENSES: { label: "Expenses", badge: "bg-rose-50 text-rose-700", dot: "bg-rose-500" },
+  ASSET: { label: "Asset", badge: "bg-blue-50 text-blue-700", dot: "bg-blue-500" },
+  LIABILITY: { label: "Liability", badge: "bg-amber-50 text-amber-700", dot: "bg-amber-500" },
+  EQUITY: { label: "Equity", badge: "bg-violet-50 text-violet-700", dot: "bg-violet-500" },
+  REVENUE: { label: "Revenue", badge: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
+  EXPENSE: { label: "Expense", badge: "bg-rose-50 text-rose-700", dot: "bg-rose-500" },
 };
 
 export const ACCOUNT_TYPE_LIST = Object.keys(ACCOUNT_TYPES) as AccountType[];
@@ -225,7 +227,7 @@ export const NAV_ITEMS: NavNode[] = [
 export const HIERARCHY_STEPS = [
   {
     label: "Account Type",
-    example: "(Assets, Liabilities, Capital, Income, Expenses)",
+    example: "(Asset, Liability, Equity, Revenue, Expense)",
     icon: Layers,
     iconBg: "bg-blue-100",
     iconColor: "text-blue-600",

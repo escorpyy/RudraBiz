@@ -1,110 +1,115 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, AccountType, NormalBalance } from "@prisma/client";
 
 const prisma = new PrismaClient();
+
+// Every group's natural (normal) balance side, used for the ledgers
+// created under it: asset/expense accounts increase on debit,
+// liability/equity/revenue accounts increase on credit.
+const NORMAL_BALANCE: Record<AccountType, NormalBalance> = {
+  ASSET: "DEBIT",
+  EXPENSE: "DEBIT",
+  LIABILITY: "CREDIT",
+  EQUITY: "CREDIT",
+  REVENUE: "CREDIT",
+};
 
 const groups = [
   {
     code: "G-1000",
-    name: "Current Assets",
-    accountType: "ASSETS" as const,
-    description: "Assets expected to be realized within 12 months",
-    order: 1,
+    description: "Current Assets",
+    type: "ASSET" as const,
     subGroups: ["Cash & Bank", "Accounts Receivable", "Inventory", "Prepaid Expenses", "Short-term Investments"],
   },
   {
     code: "G-2000",
-    name: "Non Current Assets",
-    accountType: "ASSETS" as const,
-    description: "Long term assets not expected to be realized within 12 months",
-    order: 2,
+    description: "Non Current Assets",
+    type: "ASSET" as const,
     subGroups: ["Property, Plant & Equipment", "Intangible Assets", "Long-term Investments", "Deferred Tax Assets"],
   },
   {
     code: "G-3000",
-    name: "Current Liabilities",
-    accountType: "LIABILITIES" as const,
-    description: "Obligations due within 12 months",
-    order: 3,
+    description: "Current Liabilities",
+    type: "LIABILITY" as const,
     subGroups: ["Accounts Payable", "Short-term Loans", "Accrued Expenses", "Taxes Payable"],
   },
   {
     code: "G-4000",
-    name: "Non Current Liabilities",
-    accountType: "LIABILITIES" as const,
-    description: "Obligations due after 12 months",
-    order: 4,
+    description: "Non Current Liabilities",
+    type: "LIABILITY" as const,
     subGroups: ["Long-term Loans", "Deferred Tax Liabilities", "Bonds Payable"],
   },
   {
     code: "G-5000",
-    name: "Capital",
-    accountType: "CAPITAL" as const,
-    description: "Owner's equity in the business",
-    order: 5,
+    description: "Capital",
+    type: "EQUITY" as const,
     subGroups: ["Share Capital", "Retained Earnings"],
   },
   {
     code: "G-6000",
-    name: "Income",
-    accountType: "INCOME" as const,
-    description: "Income earned from operations and other sources",
-    order: 6,
+    description: "Income",
+    type: "REVENUE" as const,
     subGroups: ["Sales Revenue", "Service Revenue", "Interest Income", "Other Income", "Rental Income", "Commission Income"],
   },
   {
     code: "G-7000",
-    name: "Direct Expenses",
-    accountType: "EXPENSES" as const,
-    description: "Costs directly related to operations",
-    order: 7,
+    description: "Direct Expenses",
+    type: "EXPENSE" as const,
     subGroups: ["Cost of Goods Sold", "Direct Labor", "Manufacturing Overhead", "Freight & Shipping"],
   },
   {
     code: "G-8000",
-    name: "Indirect Expenses",
-    accountType: "EXPENSES" as const,
-    description: "Costs not directly related to operations",
-    order: 8,
+    description: "Indirect Expenses",
+    type: "EXPENSE" as const,
     subGroups: ["Salaries & Wages", "Rent & Utilities", "Office Supplies", "Marketing & Advertising"],
   },
 ];
 
 async function main() {
   for (const g of groups) {
-    const created = await prisma.accountGroup.upsert({
+    const createdGroup = await prisma.accountGroup.upsert({
       where: { code: g.code },
       update: {},
       create: {
         code: g.code,
-        name: g.name,
-        accountType: g.accountType,
         description: g.description,
-        order: g.order,
+        type: g.type,
       },
     });
 
-    for (const [i, sgName] of g.subGroups.entries()) {
-      const subGroup = await prisma.subGroup.upsert({
-        where: { code: `${g.code}-${i + 1}` },
+    const normalBalance = NORMAL_BALANCE[g.type];
+
+    for (const [i, sgDescription] of g.subGroups.entries()) {
+      const subGroupCode = `${g.code}-${i + 1}`;
+      const subGroup = await prisma.accountSubGroup.upsert({
+        where: { accountGroupId_code: { accountGroupId: createdGroup.id, code: subGroupCode } },
         update: {},
         create: {
-          code: `${g.code}-${i + 1}`,
-          name: sgName,
-          order: i + 1,
-          accountGroupId: created.id,
+          code: subGroupCode,
+          description: sgDescription,
+          accountGroupId: createdGroup.id,
         },
       });
 
       // A couple of sample ledgers per sub-group so counts are non-zero.
-      await prisma.ledger.upsert({
+      await prisma.generalLedger.upsert({
         where: { code: `${subGroup.code}-L1` },
         update: {},
-        create: { code: `${subGroup.code}-L1`, name: `${sgName} - Ledger 1`, subGroupId: subGroup.id },
+        create: {
+          code: `${subGroup.code}-L1`,
+          name: `${sgDescription} - Ledger 1`,
+          accountSubGroupId: subGroup.id,
+          normalBalance,
+        },
       });
-      await prisma.ledger.upsert({
+      await prisma.generalLedger.upsert({
         where: { code: `${subGroup.code}-L2` },
         update: {},
-        create: { code: `${subGroup.code}-L2`, name: `${sgName} - Ledger 2`, subGroupId: subGroup.id },
+        create: {
+          code: `${subGroup.code}-L2`,
+          name: `${sgDescription} - Ledger 2`,
+          accountSubGroupId: subGroup.id,
+          normalBalance,
+        },
       });
     }
   }

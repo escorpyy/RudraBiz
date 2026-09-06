@@ -11,7 +11,6 @@ export type AccountGroupRow = {
   code: string;
   name: string;
   accountType: AccountType;
-  description: string | null;
   subGroupsCount: number;
   ledgersCount: number;
   status: RecordStatus;
@@ -135,7 +134,6 @@ export default function GroupsTable({ rows }: { rows: AccountGroupRow[] }) {
               <th className="px-3 py-3 font-medium">Group Code</th>
               <th className="px-3 py-3 font-medium">Group Name</th>
               <th className="px-3 py-3 font-medium">Account Type</th>
-              <th className="px-3 py-3 font-medium">Description</th>
               <th className="px-3 py-3 font-medium">Sub-Groups</th>
               <th className="px-3 py-3 font-medium">Ledgers</th>
               <th className="px-3 py-3 font-medium">Status</th>
@@ -153,7 +151,6 @@ export default function GroupsTable({ rows }: { rows: AccountGroupRow[] }) {
                 <td className="px-3 py-3.5">
                   <AccountTypeBadge type={row.accountType} />
                 </td>
-                <td className="max-w-xs px-3 py-3.5 text-slate-500">{row.description}</td>
                 <td className="px-3 py-3.5">
                   <span className="font-medium text-brand">{row.subGroupsCount}</span>
                 </td>
@@ -190,7 +187,7 @@ export default function GroupsTable({ rows }: { rows: AccountGroupRow[] }) {
 
             {pageRows.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-5 py-10 text-center text-sm text-slate-400">
+                <td colSpan={8} className="px-5 py-10 text-center text-sm text-slate-400">
                   No account groups match your filters.
                 </td>
               </tr>

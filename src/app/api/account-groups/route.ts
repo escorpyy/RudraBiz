@@ -5,19 +5,19 @@ import { Prisma } from "@prisma/client";
 
 export async function GET() {
   const groups = await prisma.accountGroup.findMany({
-    orderBy: { order: "asc" },
-    include: { subGroups: { include: { _count: { select: { ledgers: true } } } } },
+    orderBy: { code: "asc" },
+    include: { subGroups: { include: { _count: { select: { generalLedgers: true } } } } },
   });
   return NextResponse.json(groups);
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { accountType, code, name, description, order, status } = body ?? {};
+  const { type, code, description, isActive } = body ?? {};
 
-  if (!accountType || !code || !name) {
+  if (!type || !code || !description) {
     return NextResponse.json(
-      { error: "accountType, code, and name are required." },
+      { error: "type, code, and description are required." },
       { status: 400 }
     );
   }
@@ -25,12 +25,10 @@ export async function POST(req: NextRequest) {
   try {
     const group = await prisma.accountGroup.create({
       data: {
-        accountType,
+        type,
         code,
-        name,
-        description: description ?? null,
-        order: typeof order === "number" ? order : 0,
-        status: status ?? "ACTIVE",
+        description,
+        isActive: typeof isActive === "boolean" ? isActive : true,
       },
     });
     return NextResponse.json(group, { status: 201 });

@@ -5,15 +5,11 @@ import { useState } from "react";
 import { ChevronDown, Layers, Save } from "lucide-react";
 import { ACCOUNT_TYPE_LIST, ACCOUNT_TYPES, type AccountType, type RecordStatus } from "@/lib/constants";
 
-const DESCRIPTION_MAX = 250;
-
 export default function AccountGroupForm() {
   const router = useRouter();
-  const [accountType, setAccountType] = useState<AccountType>("ASSETS");
+  const [type, setType] = useState<AccountType>("ASSET");
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [order, setOrder] = useState(1);
   const [status, setStatus] = useState<RecordStatus>("ACTIVE");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,12 +29,10 @@ export default function AccountGroupForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          accountType,
+          type,
           code: code.trim(),
-          name: name.trim(),
-          description: description.trim() || null,
-          order,
-          status,
+          description: name.trim(),
+          isActive: status === "ACTIVE",
         }),
       });
 
@@ -80,8 +74,8 @@ export default function AccountGroupForm() {
           <div className="relative">
             <Layers size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500" />
             <select
-              value={accountType}
-              onChange={(e) => setAccountType(e.target.value as AccountType)}
+              value={type}
+              onChange={(e) => setType(e.target.value as AccountType)}
               className="w-full appearance-none rounded-lg border border-slate-200 py-2.5 pl-10 pr-10 text-sm text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
             >
               {ACCOUNT_TYPE_LIST.map((t) => (
@@ -122,36 +116,8 @@ export default function AccountGroupForm() {
           </div>
         </div>
 
-        {/* Description */}
-        <div>
-          <label className="text-sm font-medium text-slate-800">Description</label>
-          <p className="mb-2 text-xs text-slate-500">Brief description of this group.</p>
-          <textarea
-            value={description}
-            maxLength={DESCRIPTION_MAX}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={4}
-            placeholder="Assets expected to be realized within 12 months."
-            className="w-full resize-none rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
-          />
-          <div className="mt-1 text-right text-xs text-slate-400">
-            {description.length} / {DESCRIPTION_MAX}
-          </div>
-        </div>
-
-        {/* Group Order / Status */}
+        {/* Status */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <div>
-            <label className="text-sm font-medium text-slate-800">Group Order</label>
-            <p className="mb-2 text-xs text-slate-500">Display order within the account type.</p>
-            <input
-              type="number"
-              value={order}
-              onChange={(e) => setOrder(Number(e.target.value))}
-              min={1}
-              className="w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
-            />
-          </div>
           <div>
             <label className="text-sm font-medium text-slate-800">Status</label>
             <p className="mb-2 text-xs text-slate-500">Set active to make this group available.</p>

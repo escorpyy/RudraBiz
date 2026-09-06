@@ -1,0 +1,199 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { ChevronDown, Layers, Save } from "lucide-react";
+import { ACCOUNT_TYPE_LIST, ACCOUNT_TYPES, type AccountType, type RecordStatus } from "@/lib/constants";
+
+const DESCRIPTION_MAX = 250;
+
+export default function AccountGroupForm() {
+  const router = useRouter();
+  const [accountType, setAccountType] = useState<AccountType>("ASSETS");
+  const [code, setCode] = useState("");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [order, setOrder] = useState(1);
+  const [status, setStatus] = useState<RecordStatus>("ACTIVE");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (!code.trim() || !name.trim()) {
+      setError("Group Code and Group Name are required.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/account-groups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accountType,
+          code: code.trim(),
+          name: name.trim(),
+          description: description.trim() || null,
+          order,
+          status,
+        }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Failed to save group.");
+      }
+
+      router.push("/account-groups");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="rounded-xl border border-slate-200 bg-white p-6 shadow-card">
+      <div>
+        <h2 className="text-base font-semibold text-slate-900">Group Information</h2>
+        <p className="mt-1 text-sm text-slate-500">Provide details of the new account group.</p>
+      </div>
+      <div className="my-5 border-t border-slate-200" />
+
+      {error && (
+        <div className="mb-5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-700">
+          {error}
+        </div>
+      )}
+
+      <div className="space-y-5">
+        {/* Account Type */}
+        <div>
+          <label className="text-sm font-medium text-slate-800">
+            Account Type <span className="text-rose-500">*</span>
+          </label>
+          <p className="mb-2 text-xs text-slate-500">Select the account type this group belongs to.</p>
+          <div className="relative">
+            <Layers size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500" />
+            <select
+              value={accountType}
+              onChange={(e) => setAccountType(e.target.value as AccountType)}
+              className="w-full appearance-none rounded-lg border border-slate-200 py-2.5 pl-10 pr-10 text-sm text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+            >
+              {ACCOUNT_TYPE_LIST.map((t) => (
+                <option key={t} value={t}>
+                  {ACCOUNT_TYPES[t].label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          </div>
+        </div>
+
+        {/* Group Code / Group Name */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label className="text-sm font-medium text-slate-800">
+              Group Code <span className="text-rose-500">*</span>
+            </label>
+            <p className="mb-2 text-xs text-slate-500">Unique code for this group.</p>
+            <input
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="G-1000"
+              className="w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-800">
+              Group Name <span className="text-rose-500">*</span>
+            </label>
+            <p className="mb-2 text-xs text-slate-500">Name of the account group.</p>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Current Assets"
+              className="w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+            />
+          </div>
+        </div>
+
+        {/* Description */}
+        <div>
+          <label className="text-sm font-medium text-slate-800">Description</label>
+          <p className="mb-2 text-xs text-slate-500">Brief description of this group.</p>
+          <textarea
+            value={description}
+            maxLength={DESCRIPTION_MAX}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            placeholder="Assets expected to be realized within 12 months."
+            className="w-full resize-none rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+          />
+          <div className="mt-1 text-right text-xs text-slate-400">
+            {description.length} / {DESCRIPTION_MAX}
+          </div>
+        </div>
+
+        {/* Group Order / Status */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label className="text-sm font-medium text-slate-800">Group Order</label>
+            <p className="mb-2 text-xs text-slate-500">Display order within the account type.</p>
+            <input
+              type="number"
+              value={order}
+              onChange={(e) => setOrder(Number(e.target.value))}
+              min={1}
+              className="w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-800">Status</label>
+            <p className="mb-2 text-xs text-slate-500">Set active to make this group available.</p>
+            <div className="relative">
+              <span
+                className={`pointer-events-none absolute left-3.5 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full ${
+                  status === "ACTIVE" ? "bg-emerald-500" : "bg-slate-400"
+                }`}
+              />
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as RecordStatus)}
+                className="w-full appearance-none rounded-lg border border-slate-200 py-2.5 pl-8 pr-10 text-sm text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+              >
+                <option value="ACTIVE">Active</option>
+                <option value="INACTIVE">Inactive</option>
+              </select>
+              <ChevronDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="my-6 border-t border-slate-200" />
+
+      <div className="flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={() => router.push("/account-groups")}
+          className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={submitting}
+          className="flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60"
+        >
+          <Save size={16} />
+          {submitting ? "Saving..." : "Save Group"}
+        </button>
+      </div>
+    </form>
+  );
+}

@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountType {
+  ASSETS
+  LIABILITIES
+  CAPITAL
+  INCOME
+  EXPENSES
+}
+
+enum RecordStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// An Account Group is a category under an Account Type.
+// e.g. Account Type "Assets" -> Group "Current Assets"
+model AccountGroup {
+  id          String       @id @default(cuid())
+  code        String       @unique
+  name        String
+  accountType AccountType
+  description String?
+  order       Int          @default(0)
+  status      RecordStatus @default(ACTIVE)
+
+  subGroups SubGroup[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([accountType])
+  @@map("account_groups")
+}
+
+// A Sub-Group belongs to a Group. e.g. Group "Current Assets" -> Sub-Group "Inventory"
+model SubGroup {
+  id             String       @id @default(cuid())
+  code           String?      @unique
+  name           String
+  order          Int          @default(0)
+  status         RecordStatus @default(ACTIVE)
+
+  accountGroupId String
+  accountGroup   AccountGroup @relation(fields: [accountGroupId], references: [id], onDelete: Cascade)
+
+  ledgers Ledger[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([accountGroupId])
+  @@map("sub_groups")
+}
+
+// A Ledger is the actual account. e.g. Sub-Group "Inventory" -> Ledger "ABC Company"
+model Ledger {
+  id         String       @id @default(cuid())
+  code       String?      @unique
+  name       String
+  status     RecordStatus @default(ACTIVE)
+
+  subGroupId String
+  subGroup   SubGroup @relation(fields: [subGroupId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([subGroupId])
+  @@map("ledgers")
+}

@@ -110,7 +110,81 @@ async function main() {
   }
 }
 
+async function seedGeneralLedgers() {
+  const currentAssets = await prisma.accountGroup.findUnique({ where: { code: "G-1000" } });
+  const currentLiabilities = await prisma.accountGroup.findUnique({ where: { code: "G-3000" } });
+  if (!currentAssets || !currentLiabilities) return;
+
+  const cashBank = await prisma.accountSubGroup.upsert({
+    where: { code: "ASG-1000" },
+    update: {},
+    create: { code: "ASG-1000", name: "Cash & Bank", accountGroupId: currentAssets.id },
+  });
+  const receivables = await prisma.accountSubGroup.upsert({
+    where: { code: "ASG-1001" },
+    update: {},
+    create: { code: "ASG-1001", name: "Accounts Receivable", accountGroupId: currentAssets.id },
+  });
+  const payables = await prisma.accountSubGroup.upsert({
+    where: { code: "ASG-3000" },
+    update: {},
+    create: { code: "ASG-3000", name: "Accounts Payable", accountGroupId: currentLiabilities.id },
+  });
+
+  await prisma.generalLedger.upsert({
+    where: { code: "GL-1000" },
+    update: {},
+    create: {
+      code: "GL-1000",
+      name: "Cash in Hand",
+      accountSubGroupId: cashBank.id,
+      normalBalance: "DEBIT",
+      glType: "CASH",
+      isCashOrBank: true,
+      postsToCashBook: true,
+    },
+  });
+  await prisma.generalLedger.upsert({
+    where: { code: "GL-1001" },
+    update: {},
+    create: {
+      code: "GL-1001",
+      name: "Bank Account - NIC Asia",
+      accountSubGroupId: cashBank.id,
+      normalBalance: "DEBIT",
+      glType: "BANK",
+      isCashOrBank: true,
+      postsToCashBook: true,
+    },
+  });
+  await prisma.generalLedger.upsert({
+    where: { code: "GL-1100" },
+    update: {},
+    create: {
+      code: "GL-1100",
+      name: "Trade Debtors",
+      accountSubGroupId: receivables.id,
+      normalBalance: "DEBIT",
+      glType: "RECEIVABLE",
+      requiresSubLedger: true,
+    },
+  });
+  await prisma.generalLedger.upsert({
+    where: { code: "GL-3000" },
+    update: {},
+    create: {
+      code: "GL-3000",
+      name: "Trade Creditors",
+      accountSubGroupId: payables.id,
+      normalBalance: "CREDIT",
+      glType: "PAYABLE",
+      requiresSubLedger: true,
+    },
+  });
+}
+
 main()
+  .then(seedGeneralLedgers)
   .then(async () => {
     await prisma.$disconnect();
   })

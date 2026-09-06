@@ -32,6 +32,7 @@ model AccountGroup {
   status      RecordStatus @default(ACTIVE)
 
   subGroups SubGroup[]
+  accountSubGroups AccountSubGroup[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -75,4 +76,146 @@ model Ledger {
 
   @@index([subGroupId])
   @@map("ledgers")
+}
+
+// ---------------------------------------------------------------------------
+// General Ledger (chart of accounts, transactional core)
+//
+// This is a second, parallel hierarchy to AccountGroup/SubGroup/Ledger above,
+// used for the Ledger Master / journal + cash-bank voucher subsystem. It uses
+// Int ids (rather than cuid) to match the transactional tables it will link
+// to (JournalVoucherLine, CashBankVoucherLine).
+// ---------------------------------------------------------------------------
+
+enum NormalBalance {
+  DEBIT
+  CREDIT
+}
+
+enum GLType {
+  CASH
+  BANK
+  RECEIVABLE
+  PAYABLE
+  TAX
+  OTHER
+}
+
+// A Sub-Group under an Account Group, scoped to the General Ledger hierarchy.
+model AccountSubGroup {
+  id             Int          @id @default(autoincrement())
+  code           String       @unique @db.VarChar(20)
+  name           String       @db.VarChar(100)
+  accountGroupId String
+  accountGroup   AccountGroup @relation(fields: [accountGroupId], references: [id], onDelete: Restrict)
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  generalLedgers GeneralLedger[]
+
+  @@index([accountGroupId])
+  @@map("account_sub_groups")
+}
+
+// A counterparty (customer/vendor/employee) profile attached 1:1 to a
+// sub-ledger-requiring GL account.
+model Party {
+  id              Int      @id @default(autoincrement())
+  generalLedgerId Int      @unique
+  generalLedger   GeneralLedger @relation(fields: [generalLedgerId], references: [id], onDelete: Cascade)
+  contactPerson   String?
+  phone           String?
+  email           String?
+  address         String?
+  creditLimit     Decimal? @db.Decimal(18, 2)
+  creditDays      Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("parties")
+}
+
+// Simple lookup used to tag GL accounts by geographic/branch sub-area.
+model SubArea {
+  id             Int             @id @default(autoincrement())
+  code           String?         @unique
+  name           String
+  isActive       Boolean         @default(true)
+  generalLedgers GeneralLedger[]
+
+  @@map("sub_areas")
+}
+
+// Simple lookup used to tag GL accounts (e.g. receivables) by sales agent.
+model Agent {
+  id             Int             @id @default(autoincrement())
+  code           String?         @unique
+  name           String
+  isActive       Boolean         @default(true)
+  generalLedgers GeneralLedger[]
+
+  @@map("agents")
+}
+
+// Placeholder line-item tables the voucher subsystem will build on. Kept
+// minimal for now — full voucher entry (header, narration, etc.) is a
+// separate piece of work.
+model JournalVoucherLine {
+  id              Int           @id @default(autoincrement())
+  generalLedgerId Int
+  generalLedger   GeneralLedger @relation(fields: [generalLedgerId], references: [id], onDelete: Restrict)
+  amount          Decimal       @default(0) @db.Decimal(18, 2)
+  createdAt       DateTime      @default(now())
+
+  @@index([generalLedgerId])
+  @@map("journal_voucher_lines")
+}
+
+model CashBankVoucherLine {
+  id              Int           @id @default(autoincrement())
+  generalLedgerId Int
+  generalLedger   GeneralLedger @relation(fields: [generalLedgerId], references: [id], onDelete: Restrict)
+  amount          Decimal       @default(0) @db.Decimal(18, 2)
+  createdAt       DateTime      @default(now())
+
+  @@index([generalLedgerId])
+  @@map("cash_bank_voucher_lines")
+}
+
+model GeneralLedger {
+  id                Int             @id @default(autoincrement())
+  code              String          @unique @db.VarChar(20)
+  name              String          @db.VarChar(100)
+  accountSubGroupId Int
+  accountSubGroup   AccountSubGroup @relation(fields: [accountSubGroupId], references: [id], onDelete: Restrict)
+  normalBalance     NormalBalance
+  glType            GLType          @default(OTHER)
+  parentId          Int?
+  parent            GeneralLedger?  @relation("GLHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children          GeneralLedger[] @relation("GLHierarchy")
+  isCashOrBank      Boolean         @default(false)
+  postsToCashBook   Boolean         @default(false)
+  requiresSubLedger Boolean         @default(false)
+  allowDocAdjust    Boolean         @default(false)
+  isActive          Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  party             Party?
+  subAreaId         Int?
+  subArea           SubArea?        @relation(fields: [subAreaId], references: [id], onDelete: SetNull)
+  agentId           Int?
+  agent             Agent?          @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  // Dimension tables (Cash Flow, Working Capital, Cost Behavior, Decision Areas)
+  // are intentionally paused — they depend on JournalEntry/JournalLine
+  // existing first. Revisit after the transactional core is built.
+  journalVoucherLines  JournalVoucherLine[]
+  cashBankVoucherLines CashBankVoucherLine[]
+
+  @@index([accountSubGroupId])
+  @@index([parentId])
+  @@index([glType])
+  @@index([subAreaId])
+  @@index([agentId])
+  @@map("general_ledgers")
 }

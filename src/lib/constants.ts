@@ -18,6 +18,24 @@ import {
 
 export type AccountType = "ASSETS" | "LIABILITIES" | "CAPITAL" | "INCOME" | "EXPENSES";
 export type RecordStatus = "ACTIVE" | "INACTIVE";
+export type NormalBalance = "DEBIT" | "CREDIT";
+export type GLType = "CASH" | "BANK" | "RECEIVABLE" | "PAYABLE" | "TAX" | "OTHER";
+
+export const NORMAL_BALANCES: Record<NormalBalance, { label: string; badge: string }> = {
+  DEBIT: { label: "Debit", badge: "bg-blue-50 text-blue-700" },
+  CREDIT: { label: "Credit", badge: "bg-violet-50 text-violet-700" },
+};
+export const NORMAL_BALANCE_LIST = Object.keys(NORMAL_BALANCES) as NormalBalance[];
+
+export const GL_TYPES: Record<GLType, { label: string; badge: string }> = {
+  CASH: { label: "Cash", badge: "bg-emerald-50 text-emerald-700" },
+  BANK: { label: "Bank", badge: "bg-sky-50 text-sky-700" },
+  RECEIVABLE: { label: "Receivable", badge: "bg-amber-50 text-amber-700" },
+  PAYABLE: { label: "Payable", badge: "bg-rose-50 text-rose-700" },
+  TAX: { label: "Tax", badge: "bg-orange-50 text-orange-700" },
+  OTHER: { label: "Other", badge: "bg-slate-100 text-slate-600" },
+};
+export const GL_TYPE_LIST = Object.keys(GL_TYPES) as GLType[];
 
 // Display label + color tokens for each account type badge/icon, used on
 // both the list table pills and the form's account type dropdown.

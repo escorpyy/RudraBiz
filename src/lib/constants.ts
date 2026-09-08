@@ -136,6 +136,7 @@ export const NAV_ITEMS: NavNode[] = [
   },
   {
         label: "Inventory Reports",
+		icon: FileBarChart2,
         children: [
           { label: "Stock Ledger", href: "/inventory/reports/stock-ledger" },
           { label: "Stock Summary", href: "/inventory/reports/stock-summary" },

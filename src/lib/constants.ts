@@ -80,7 +80,7 @@ export const NAV_ITEMS: NavNode[] = [
     icon: Database,
     children: [
       { label: "Ledger Master", href: "/master/ledgers" },
-      { label: "SubLedger Master", href: "/master/subledgers" },
+      { label: "Party Master", href: "/master/parties" },
       { label: "Account Group Master", href: "/account-groups" },
       { label: "Account Sub-Group Master", href: "/sub-groups" },
       { label: "Product Master", href: "/master/products" },

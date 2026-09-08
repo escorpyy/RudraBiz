@@ -29,6 +29,21 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await prisma.accountGroup.delete({ where: { id: Number(id) } });
-  return NextResponse.json({ success: true });
+  const groupId = Number(id);
+
+  const subGroupCount = await prisma.accountSubGroup.count({ where: { accountGroupId: groupId } });
+  if (subGroupCount > 0) {
+    return NextResponse.json(
+      { error: `Cannot delete: this group has ${subGroupCount} sub-group(s). Delete or reassign them first.` },
+      { status: 409 }
+    );
+  }
+
+  try {
+    await prisma.accountGroup.delete({ where: { id: groupId } });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to delete account group.";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
 }

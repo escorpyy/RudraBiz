@@ -36,6 +36,28 @@ export const ACCOUNT_TYPES: Record<
 
 export const ACCOUNT_TYPE_LIST = Object.keys(ACCOUNT_TYPES) as AccountType[];
 
+// Matches the "NormalBalance" enum in prisma/schema.prisma.
+export type NormalBalance = "DEBIT" | "CREDIT";
+
+export const NORMAL_BALANCES: Record<NormalBalance, { label: string; badge: string }> = {
+  DEBIT: { label: "Debit", badge: "bg-blue-50 text-blue-700" },
+  CREDIT: { label: "Credit", badge: "bg-violet-50 text-violet-700" },
+};
+
+export const NORMAL_BALANCE_LIST = Object.keys(NORMAL_BALANCES) as NormalBalance[];
+
+// Matches the "GLType" enum in prisma/schema.prisma.
+export type GLType = "CUSTOMER" | "VENDOR" | "BOTH" | "OTHER";
+
+export const GL_TYPES: Record<GLType, { label: string; badge: string }> = {
+  CUSTOMER: { label: "Customer", badge: "bg-emerald-50 text-emerald-700" },
+  VENDOR: { label: "Vendor", badge: "bg-amber-50 text-amber-700" },
+  BOTH: { label: "Both", badge: "bg-sky-50 text-sky-700" },
+  OTHER: { label: "Other", badge: "bg-slate-100 text-slate-600" },
+};
+
+export const GL_TYPE_LIST = Object.keys(GL_TYPES) as GLType[];
+
 export const STATUS_STYLES: Record<RecordStatus, { label: string; badge: string; dot: string }> = {
   ACTIVE: { label: "Active", badge: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
   INACTIVE: { label: "Inactive", badge: "bg-slate-100 text-slate-500", dot: "bg-slate-400" },

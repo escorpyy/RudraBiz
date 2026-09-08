@@ -4,32 +4,37 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Filter, RotateCcw, Eye, Pencil, Trash2, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight } from "lucide-react";
-import AccountTypeBadge from "./AccountTypeBadge";
-import StatusBadge from "./StatusBadge";
+import StatusBadge from "@/components/account-groups/StatusBadge";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
-import { ACCOUNT_TYPE_LIST, ACCOUNT_TYPES, type AccountType, type RecordStatus } from "@/lib/constants";
+import type { RecordStatus } from "@/lib/constants";
 
-export type AccountGroupRow = {
-  id: string;
+export type SubGroupRow = {
+  id: number;
   code: string;
   name: string;
-  accountType: AccountType;
-  subGroupsCount: number;
+  accountGroupId: number;
+  accountGroupName: string;
   ledgersCount: number;
   status: RecordStatus;
 };
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
-export default function GroupsTable({ rows }: { rows: AccountGroupRow[] }) {
+export default function SubGroupsTable({
+  rows,
+  accountGroupOptions,
+}: {
+  rows: SubGroupRow[];
+  accountGroupOptions: { id: number; name: string }[];
+}) {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<AccountType | "ALL">("ALL");
+  const [groupFilter, setGroupFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<RecordStatus | "ALL">("ALL");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const [deleteTarget, setDeleteTarget] = useState<AccountGroupRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SubGroupRow | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -39,11 +44,11 @@ export default function GroupsTable({ rows }: { rows: AccountGroupRow[] }) {
         search.trim() === "" ||
         row.name.toLowerCase().includes(search.toLowerCase()) ||
         row.code.toLowerCase().includes(search.toLowerCase());
-      const matchesType = typeFilter === "ALL" || row.accountType === typeFilter;
+      const matchesGroup = groupFilter === "ALL" || String(row.accountGroupId) === groupFilter;
       const matchesStatus = statusFilter === "ALL" || row.status === statusFilter;
-      return matchesSearch && matchesType && matchesStatus;
+      return matchesSearch && matchesGroup && matchesStatus;
     });
-  }, [rows, search, typeFilter, statusFilter]);
+  }, [rows, search, groupFilter, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -53,7 +58,7 @@ export default function GroupsTable({ rows }: { rows: AccountGroupRow[] }) {
 
   function resetFilters() {
     setSearch("");
-    setTypeFilter("ALL");
+    setGroupFilter("ALL");
     setStatusFilter("ALL");
     setPage(1);
   }
@@ -63,9 +68,9 @@ export default function GroupsTable({ rows }: { rows: AccountGroupRow[] }) {
     setDeleting(true);
     setDeleteError(null);
     try {
-      const res = await fetch(`/api/account-groups/${deleteTarget.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/account-sub-groups/${deleteTarget.id}`, { method: "DELETE" });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.error ?? "Failed to delete account group.");
+      if (!res.ok) throw new Error(body.error ?? "Failed to delete account sub-group.");
       setDeleteTarget(null);
       router.refresh();
     } catch (err) {
@@ -79,10 +84,10 @@ export default function GroupsTable({ rows }: { rows: AccountGroupRow[] }) {
     <div className="rounded-xl border border-slate-200 bg-white shadow-card">
       {/* Tabs */}
       <div className="flex gap-6 border-b border-slate-200 px-5 pt-4">
-        <button className="border-b-2 border-brand pb-3 text-sm font-medium text-brand">Groups</button>
-        <Link href="/sub-groups" className="pb-3 text-sm font-medium text-slate-500 hover:text-slate-700">
-          Sub-Groups
+        <Link href="/account-groups" className="pb-3 text-sm font-medium text-slate-500 hover:text-slate-700">
+          Groups
         </Link>
+        <button className="border-b-2 border-brand pb-3 text-sm font-medium text-brand">Sub-Groups</button>
         <Link href="/master/ledgers" className="pb-3 text-sm font-medium text-slate-500 hover:text-slate-700">
           Ledgers
         </Link>
@@ -98,23 +103,23 @@ export default function GroupsTable({ rows }: { rows: AccountGroupRow[] }) {
               setSearch(e.target.value);
               setPage(1);
             }}
-            placeholder="Search groups..."
+            placeholder="Search sub-groups..."
             className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
           />
         </div>
 
         <select
-          value={typeFilter}
+          value={groupFilter}
           onChange={(e) => {
-            setTypeFilter(e.target.value as AccountType | "ALL");
+            setGroupFilter(e.target.value);
             setPage(1);
           }}
           className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-brand"
         >
-          <option value="ALL">All</option>
-          {ACCOUNT_TYPE_LIST.map((t) => (
-            <option key={t} value={t}>
-              {ACCOUNT_TYPES[t].label}
+          <option value="ALL">All Groups</option>
+          {accountGroupOptions.map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.name}
             </option>
           ))}
         </select>
@@ -151,10 +156,9 @@ export default function GroupsTable({ rows }: { rows: AccountGroupRow[] }) {
           <thead>
             <tr className="border-y border-slate-200 text-xs font-medium uppercase tracking-wide text-slate-500">
               <th className="px-5 py-3 font-medium">#</th>
-              <th className="px-3 py-3 font-medium">Group Code</th>
-              <th className="px-3 py-3 font-medium">Group Name</th>
-              <th className="px-3 py-3 font-medium">Account Type</th>
-              <th className="px-3 py-3 font-medium">Sub-Groups</th>
+              <th className="px-3 py-3 font-medium">Sub-Group Code</th>
+              <th className="px-3 py-3 font-medium">Sub-Group Name</th>
+              <th className="px-3 py-3 font-medium">Account Group</th>
               <th className="px-3 py-3 font-medium">Ledgers</th>
               <th className="px-3 py-3 font-medium">Status</th>
               <th className="px-5 py-3 text-right font-medium">Actions</th>
@@ -168,12 +172,7 @@ export default function GroupsTable({ rows }: { rows: AccountGroupRow[] }) {
                 </td>
                 <td className="px-3 py-3.5 font-medium text-slate-900">{row.code}</td>
                 <td className="px-3 py-3.5 text-slate-800">{row.name}</td>
-                <td className="px-3 py-3.5">
-                  <AccountTypeBadge type={row.accountType} />
-                </td>
-                <td className="px-3 py-3.5">
-                  <span className="font-medium text-brand">{row.subGroupsCount}</span>
-                </td>
+                <td className="px-3 py-3.5 text-slate-500">{row.accountGroupName}</td>
                 <td className="px-3 py-3.5">
                   <span className="font-medium text-brand">{row.ledgersCount}</span>
                 </td>
@@ -183,14 +182,14 @@ export default function GroupsTable({ rows }: { rows: AccountGroupRow[] }) {
                 <td className="px-5 py-3.5">
                   <div className="flex items-center justify-end gap-1.5">
                     <Link
-                      href={`/account-groups/${row.id}`}
+                      href={`/sub-groups/${row.id}`}
                       title="View"
                       className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                     >
                       <Eye size={16} />
                     </Link>
                     <Link
-                      href={`/account-groups/${row.id}/edit`}
+                      href={`/sub-groups/${row.id}/edit`}
                       title="Edit"
                       className="rounded-md p-1.5 text-brand hover:bg-blue-50"
                     >
@@ -213,8 +212,8 @@ export default function GroupsTable({ rows }: { rows: AccountGroupRow[] }) {
 
             {pageRows.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-5 py-10 text-center text-sm text-slate-400">
-                  No account groups match your filters.
+                <td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-400">
+                  No sub-groups match your filters.
                 </td>
               </tr>
             )}
@@ -292,7 +291,7 @@ export default function GroupsTable({ rows }: { rows: AccountGroupRow[] }) {
       <ConfirmDialog
         open={deleteTarget !== null}
         title={`Delete "${deleteTarget?.name}"?`}
-        message="This permanently deletes the account group. This can't be undone."
+        message="This permanently deletes the account sub-group. This can't be undone."
         error={deleteError}
         loading={deleting}
         onConfirm={handleDelete}

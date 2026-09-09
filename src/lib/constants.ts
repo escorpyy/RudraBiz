@@ -80,7 +80,8 @@ export const NAV_ITEMS: NavNode[] = [
     icon: Database,
     children: [
       { label: "Ledger Master", href: "/master/ledgers" },
-      { label: "SubLedger Master", href: "/master/subledgers" },
+      { label: "Sub-Ledger Master", href: "/master/sub-ledgers" },
+      { label: "Party Master", href: "/master/parties" },
       { label: "Account Group Master", href: "/account-groups" },
       { label: "Account Sub-Group Master", href: "/sub-groups" },
       { label: "Product Master", href: "/master/products" },
@@ -115,20 +116,9 @@ export const NAV_ITEMS: NavNode[] = [
       { label: "Stock Consumption", href: "/inventory/stock-consumption" },
       { label: "Stock Production", href: "/inventory/stock-production" },
       { label: "Physical Stock", href: "/inventory/physical-stock" },
-      {
-        label: "Inventory Reports",
-        children: [
-          { label: "Stock Ledger", href: "/inventory/reports/stock-ledger" },
-          { label: "Stock Summary", href: "/inventory/reports/stock-summary" },
-          { label: "Stock Valuation", href: "/inventory/reports/stock-valuation" },
-          { label: "Stock Movement", href: "/inventory/reports/stock-movement" },
-          { label: "Stock Aging", href: "/inventory/reports/stock-aging" },
-          { label: "Slow / Fast Moving Items", href: "/inventory/reports/slow-fast-moving-items" },
-          { label: "Stock Adjustment Report", href: "/inventory/reports/stock-adjustment-report" },
-        ],
-      },
     ],
   },
+   
   {
     label: "Reports",
     icon: FileBarChart2,
@@ -145,6 +135,19 @@ export const NAV_ITEMS: NavNode[] = [
       { label: "Ageing Reports", href: "/reports/ageing" },
     ],
   },
+  {
+        label: "Inventory Reports",
+		icon: FileBarChart2,
+        children: [
+          { label: "Stock Ledger", href: "/inventory/reports/stock-ledger" },
+          { label: "Stock Summary", href: "/inventory/reports/stock-summary" },
+          { label: "Stock Valuation", href: "/inventory/reports/stock-valuation" },
+          { label: "Stock Movement", href: "/inventory/reports/stock-movement" },
+          { label: "Stock Aging", href: "/inventory/reports/stock-aging" },
+          { label: "Slow / Fast Moving Items", href: "/inventory/reports/slow-fast-moving-items" },
+          { label: "Stock Adjustment Report", href: "/inventory/reports/stock-adjustment-report" },
+        ],
+      },
   {
     label: "FS — Financial Statements",
     icon: Landmark,

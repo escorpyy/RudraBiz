@@ -14,57 +14,39 @@ import {
   ChevronsRight,
   ChevronLeft,
   ChevronRight,
-  Landmark,
-  Wallet,
+  BookOpen,
   Users,
-  FileEdit,
 } from "lucide-react";
-import GLTypeBadge from "./GLTypeBadge";
 import StatusBadge from "@/components/account-groups/StatusBadge";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
-import { GL_TYPE_LIST, GL_TYPES, type GLType } from "@/lib/constants";
 
-export type GeneralLedgerRow = {
+export type SubLedgerRow = {
   id: number;
   code: string;
   name: string;
-  glType: GLType;
-  accountGroupName: string;
-  accountSubGroupName: string;
-  isCashOrBank: boolean;
-  postsToCashBook: boolean;
-  requiresSubLedger: boolean;
-  allowDocAdjust: boolean;
+  generalLedgerId: number | null;
+  generalLedgerName: string | null;
+  partyName: string | null;
   isActive: boolean;
-  parentName: string | null;
 };
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
-const POSTING_FLAGS: {
-  key: keyof Pick<
-    GeneralLedgerRow,
-    "isCashOrBank" | "postsToCashBook" | "requiresSubLedger" | "allowDocAdjust"
-  >;
-  icon: typeof Landmark;
-  title: string;
-  className: string;
-}[] = [
-  { key: "isCashOrBank", icon: Landmark, title: "Cash or Bank account", className: "text-emerald-600 bg-emerald-50" },
-  { key: "postsToCashBook", icon: Wallet, title: "Posts to Cash Book", className: "text-blue-600 bg-blue-50" },
-  { key: "requiresSubLedger", icon: Users, title: "Requires Sub-Ledger (party)", className: "text-violet-600 bg-violet-50" },
-  { key: "allowDocAdjust", icon: FileEdit, title: "Allow Document Adjustment", className: "text-amber-600 bg-amber-50" },
-];
-
-export default function GLTable({ rows }: { rows: GeneralLedgerRow[] }) {
+export default function SubLedgersTable({
+  rows,
+  generalLedgerOptions,
+}: {
+  rows: SubLedgerRow[];
+  generalLedgerOptions: { id: number; name: string }[];
+}) {
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<GLType | "ALL">("ALL");
+  const [glFilter, setGlFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<"ACTIVE" | "INACTIVE" | "ALL">("ALL");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const [deleteTarget, setDeleteTarget] = useState<GeneralLedgerRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SubLedgerRow | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -74,12 +56,12 @@ export default function GLTable({ rows }: { rows: GeneralLedgerRow[] }) {
         search.trim() === "" ||
         row.name.toLowerCase().includes(search.toLowerCase()) ||
         row.code.toLowerCase().includes(search.toLowerCase());
-      const matchesType = typeFilter === "ALL" || row.glType === typeFilter;
+      const matchesGl = glFilter === "ALL" || String(row.generalLedgerId) === glFilter;
       const matchesStatus =
         statusFilter === "ALL" || (statusFilter === "ACTIVE") === row.isActive;
-      return matchesSearch && matchesType && matchesStatus;
+      return matchesSearch && matchesGl && matchesStatus;
     });
-  }, [rows, search, typeFilter, statusFilter]);
+  }, [rows, search, glFilter, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -89,7 +71,7 @@ export default function GLTable({ rows }: { rows: GeneralLedgerRow[] }) {
 
   function resetFilters() {
     setSearch("");
-    setTypeFilter("ALL");
+    setGlFilter("ALL");
     setStatusFilter("ALL");
     setPage(1);
   }
@@ -99,9 +81,9 @@ export default function GLTable({ rows }: { rows: GeneralLedgerRow[] }) {
     setDeleting(true);
     setDeleteError(null);
     try {
-      const res = await fetch(`/api/general-ledgers/${deleteTarget.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/sub-ledgers/${deleteTarget.id}`, { method: "DELETE" });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.error ?? "Failed to delete general ledger.");
+      if (!res.ok) throw new Error(body.error ?? "Failed to delete sub-ledger.");
       setDeleteTarget(null);
       router.refresh();
     } catch (err) {
@@ -121,10 +103,10 @@ export default function GLTable({ rows }: { rows: GeneralLedgerRow[] }) {
         <Link href="/sub-groups" className="pb-3 text-sm font-medium text-slate-500 hover:text-slate-700">
           Sub-Groups
         </Link>
-        <button className="border-b-2 border-brand pb-3 text-sm font-medium text-brand">Ledgers</button>
-        <Link href="/master/sub-ledgers" className="pb-3 text-sm font-medium text-slate-500 hover:text-slate-700">
-          Sub-Ledgers
+        <Link href="/master/ledgers" className="pb-3 text-sm font-medium text-slate-500 hover:text-slate-700">
+          Ledgers
         </Link>
+        <button className="border-b-2 border-brand pb-3 text-sm font-medium text-brand">Sub-Ledgers</button>
       </div>
 
       {/* Filters */}
@@ -137,23 +119,23 @@ export default function GLTable({ rows }: { rows: GeneralLedgerRow[] }) {
               setSearch(e.target.value);
               setPage(1);
             }}
-            placeholder="Search ledgers..."
+            placeholder="Search sub-ledgers..."
             className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
           />
         </div>
 
         <select
-          value={typeFilter}
+          value={glFilter}
           onChange={(e) => {
-            setTypeFilter(e.target.value as GLType | "ALL");
+            setGlFilter(e.target.value);
             setPage(1);
           }}
           className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-brand"
         >
-          <option value="ALL">All Types</option>
-          {GL_TYPE_LIST.map((t) => (
-            <option key={t} value={t}>
-              {GL_TYPES[t].label}
+          <option value="ALL">All General Ledgers</option>
+          {generalLedgerOptions.map((gl) => (
+            <option key={gl.id} value={gl.id}>
+              {gl.name}
             </option>
           ))}
         </select>
@@ -190,14 +172,11 @@ export default function GLTable({ rows }: { rows: GeneralLedgerRow[] }) {
           <thead>
             <tr className="border-y border-slate-200 text-xs font-medium uppercase tracking-wide text-slate-500">
               <th className="px-5 py-3 font-medium">#</th>
-              <th className="px-3 py-3 font-medium">GL Code</th>
-              <th className="px-3 py-3 font-medium">GL Name</th>
-              <th className="px-3 py-3 font-medium">GL Type</th>
-              <th className="px-3 py-3 font-medium">Account Group</th>
-              <th className="px-3 py-3 font-medium">Account Sub-Group</th>
-              <th className="px-3 py-3 font-medium">Posting Options</th>
+              <th className="px-3 py-3 font-medium">Code</th>
+              <th className="px-3 py-3 font-medium">Name</th>
+              <th className="px-3 py-3 font-medium">General Ledger</th>
+              <th className="px-3 py-3 font-medium">Party</th>
               <th className="px-3 py-3 font-medium">Status</th>
-              <th className="px-3 py-3 font-medium">Parent Ledger</th>
               <th className="px-5 py-3 text-right font-medium">Actions</th>
             </tr>
           </thead>
@@ -209,45 +188,40 @@ export default function GLTable({ rows }: { rows: GeneralLedgerRow[] }) {
                 </td>
                 <td className="px-3 py-3.5 font-medium text-slate-900">{row.code}</td>
                 <td className="px-3 py-3.5 text-slate-800">{row.name}</td>
-                <td className="px-3 py-3.5">
-                  <GLTypeBadge type={row.glType} />
+                <td className="px-3 py-3.5 text-slate-500">
+                  {row.generalLedgerName ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <BookOpen size={13} className="text-amber-600" />
+                      {row.generalLedgerName}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
                 </td>
-                <td className="px-3 py-3.5 text-slate-500">{row.accountGroupName}</td>
-                <td className="px-3 py-3.5 text-slate-500">{row.accountSubGroupName}</td>
-                <td className="px-3 py-3.5">
-                  <div className="flex items-center gap-1">
-                    {POSTING_FLAGS.filter((f) => row[f.key]).map((f) => {
-                      const Icon = f.icon;
-                      return (
-                        <span
-                          key={f.key}
-                          title={f.title}
-                          className={`flex h-6 w-6 items-center justify-center rounded-md ${f.className}`}
-                        >
-                          <Icon size={13} />
-                        </span>
-                      );
-                    })}
-                    {POSTING_FLAGS.every((f) => !row[f.key]) && (
-                      <span className="text-slate-400">—</span>
-                    )}
-                  </div>
+                <td className="px-3 py-3.5 text-slate-500">
+                  {row.partyName ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Users size={13} className="text-violet-600" />
+                      {row.partyName}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
                 </td>
                 <td className="px-3 py-3.5">
                   <StatusBadge status={row.isActive ? "ACTIVE" : "INACTIVE"} />
                 </td>
-                <td className="px-3 py-3.5 text-slate-500">{row.parentName ?? "—"}</td>
                 <td className="px-5 py-3.5">
                   <div className="flex items-center justify-end gap-1.5">
                     <Link
-                      href={`/master/ledgers/${row.id}`}
+                      href={`/master/sub-ledgers/${row.id}`}
                       title="View"
                       className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                     >
                       <Eye size={16} />
                     </Link>
                     <Link
-                      href={`/master/ledgers/${row.id}/edit`}
+                      href={`/master/sub-ledgers/${row.id}/edit`}
                       title="Edit"
                       className="rounded-md p-1.5 text-brand hover:bg-blue-50"
                     >
@@ -270,8 +244,8 @@ export default function GLTable({ rows }: { rows: GeneralLedgerRow[] }) {
 
             {pageRows.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-5 py-10 text-center text-sm text-slate-400">
-                  No general ledgers match your filters.
+                <td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-400">
+                  No sub-ledgers match your filters.
                 </td>
               </tr>
             )}
@@ -349,7 +323,7 @@ export default function GLTable({ rows }: { rows: GeneralLedgerRow[] }) {
       <ConfirmDialog
         open={deleteTarget !== null}
         title={`Delete "${deleteTarget?.name}"?`}
-        message="This permanently deletes the general ledger. This can't be undone."
+        message="This permanently deletes the sub-ledger. This can't be undone."
         error={deleteError}
         loading={deleting}
         onConfirm={handleDelete}

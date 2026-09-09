@@ -86,6 +86,9 @@ export default function GroupsTable({ rows }: { rows: AccountGroupRow[] }) {
         <Link href="/master/ledgers" className="pb-3 text-sm font-medium text-slate-500 hover:text-slate-700">
           Ledgers
         </Link>
+        <Link href="/master/sub-ledgers" className="pb-3 text-sm font-medium text-slate-500 hover:text-slate-700">
+          Sub-Ledgers
+        </Link>
       </div>
 
       {/* Filters */}

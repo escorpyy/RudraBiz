@@ -122,6 +122,8 @@ model GeneralLedger {
   journalVoucherLines  JournalVoucherLine[]
   cashBankVoucherLines CashBankVoucherLine[]
 
+  subLedgers        SubLedger[]
+
   @@index([accountSubGroupId])
   @@index([parentId])
   @@index([glType])
@@ -217,9 +219,38 @@ model Party {
   customerDetail    CustomerDetail?
   vendorDetail      VendorDetail?
 
+  subLedgers        SubLedger[]
+
   @@index([panNo])
   @@index([subAreaId])
   @@index([agentId])
+}
+
+// ============================================================
+// SUB LEDGER
+// A finer-grained posting account nested under a General Ledger
+// and/or tied to a Party — used where a GL has
+// `requiresSubLedger` set and postings need to track detail
+// below the GL level (e.g. per-party or per-scheme balances).
+// ============================================================
+
+model SubLedger {
+  id              Int            @id @default(autoincrement())
+  code            String         @unique @db.VarChar(20)
+  name            String         @db.VarChar(100)
+
+  generalLedgerId Int?
+  generalLedger   GeneralLedger? @relation(fields: [generalLedgerId], references: [id], onDelete: Restrict)
+
+  partyId         Int?
+  party           Party?         @relation(fields: [partyId], references: [id], onDelete: Restrict)
+
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([generalLedgerId])
+  @@index([partyId])
 }
 
 model CustomerDetail {

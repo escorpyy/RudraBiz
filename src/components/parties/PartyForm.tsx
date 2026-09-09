@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Network, Save, MapPin, ShieldCheck } from "lucide-react";
 import { ACCOUNT_TYPES, type AccountType, type RecordStatus } from "@/lib/constants";
@@ -47,6 +47,7 @@ export type PartyFormInitial = {
 
 export default function PartyForm({ initial }: { initial?: PartyFormInitial }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isEdit = Boolean(initial);
 
   const [accountGroups, setAccountGroups] = useState<AccountGroupOption[]>([]);
@@ -74,7 +75,9 @@ export default function PartyForm({ initial }: { initial?: PartyFormInitial }) {
   const [panNo, setPanNo] = useState(initial?.panNo ?? "");
   const [isVatRegistered, setIsVatRegistered] = useState(initial?.isVatRegistered ?? false);
 
-  const [subAreaId, setSubAreaId] = useState(initial?.subAreaId ? String(initial.subAreaId) : "");
+  const [subAreaId, setSubAreaId] = useState(
+    initial?.subAreaId ? String(initial.subAreaId) : searchParams.get("subAreaId") ?? ""
+  );
   const [agentId, setAgentId] = useState(initial?.agentId ? String(initial.agentId) : "");
 
   const [creditLimit, setCreditLimit] = useState(initial?.creditLimit ?? "");

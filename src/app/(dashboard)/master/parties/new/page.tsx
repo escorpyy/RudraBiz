@@ -1,0 +1,40 @@
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import PartyForm from "@/components/parties/PartyForm";
+import PartyInfoPanel from "@/components/parties/PartyInfoPanel";
+
+export const dynamic = "force-dynamic";
+
+export default function NewPartyPage() {
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Add New Party</h1>
+          <div className="mt-1 flex items-center gap-1.5 text-sm">
+            <Link href="/master/parties" className="text-brand hover:underline">
+              Party Master
+            </Link>
+            <span className="text-slate-400">&gt;</span>
+            <span className="text-slate-500">Add New Party</span>
+          </div>
+        </div>
+        <Link
+          href="/master/parties"
+          className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+          <ArrowLeft size={16} />
+          Back to Parties
+        </Link>
+      </div>
+
+      <div className="my-5 border-t border-slate-200" />
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
+        <PartyForm />
+        <PartyInfoPanel />
+      </div>
+    </div>
+  );
+}

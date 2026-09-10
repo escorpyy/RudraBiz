@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Layers, Network, Save } from "lucide-react";
+import Combobox, { type ComboboxOption } from "@/components/shared/Combobox";
 import {
   GL_TYPE_LIST,
   GL_TYPES,
@@ -97,6 +98,24 @@ export default function GLForm({ initial }: { initial?: GLFormInitial }) {
   const parentOptions = useMemo(
     () => (isEdit ? parents.filter((p) => p.id !== initial!.id) : parents),
     [parents, isEdit, initial]
+  );
+
+  const accountGroupOptions: ComboboxOption[] = useMemo(
+    () =>
+      accountGroups.map((g) => ({
+        value: String(g.id),
+        label: `${g.code} — ${g.description}`,
+        description: ACCOUNT_TYPES[g.type].label,
+      })),
+    [accountGroups]
+  );
+  const subGroupOptions: ComboboxOption[] = useMemo(
+    () => availableSubGroups.map((sg) => ({ value: String(sg.id), label: `${sg.code} — ${sg.description}` })),
+    [availableSubGroups]
+  );
+  const parentLedgerOptions: ComboboxOption[] = useMemo(
+    () => parentOptions.map((p) => ({ value: String(p.id), label: `${p.code} — ${p.name}` })),
+    [parentOptions]
   );
 
   function handleGroupChange(value: string) {
@@ -220,24 +239,15 @@ export default function GLForm({ initial }: { initial?: GLFormInitial }) {
             Account Group <span className="text-rose-500">*</span>
           </label>
           <p className="mb-2 text-xs text-slate-500">Select the account group this ledger belongs to.</p>
-          <div className="relative">
-            <Network size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500" />
-            <select
-              value={accountGroupId}
-              onChange={(e) => handleGroupChange(e.target.value)}
-              className="w-full appearance-none rounded-lg border border-slate-200 py-2.5 pl-10 pr-10 text-sm text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
-            >
-              <option value="">
-                {accountGroups.length === 0 ? "No account groups available — create one first" : "Select an account group"}
-              </option>
-              {accountGroups.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.code} — {g.description} ({ACCOUNT_TYPES[g.type].label})
-                </option>
-              ))}
-            </select>
-            <ChevronDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          </div>
+          <Combobox
+            options={accountGroupOptions}
+            value={accountGroupId}
+            onChange={handleGroupChange}
+            icon={Network}
+            placeholder={accountGroups.length === 0 ? "No account groups available — create one first" : "Search account groups..."}
+            emptyMessage="No account groups match your search."
+            aria-label="Account Group"
+          />
         </div>
 
         {/* Account Sub-Group */}
@@ -248,29 +258,22 @@ export default function GLForm({ initial }: { initial?: GLFormInitial }) {
           <p className="mb-2 text-xs text-slate-500">
             {accountGroupId ? "Select the sub-group this ledger belongs to." : "Select an Account Group first."}
           </p>
-          <div className="relative">
-            <Layers size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500" />
-            <select
-              value={accountSubGroupId}
-              onChange={(e) => setAccountSubGroupId(e.target.value)}
-              disabled={!accountGroupId}
-              className="w-full appearance-none rounded-lg border border-slate-200 py-2.5 pl-10 pr-10 text-sm text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand disabled:bg-slate-50 disabled:text-slate-400"
-            >
-              <option value="">
-                {!accountGroupId
-                  ? "Select an Account Group first"
-                  : availableSubGroups.length === 0
-                    ? "No sub-groups in this group — create one first"
-                    : "Select a sub-group"}
-              </option>
-              {availableSubGroups.map((sg) => (
-                <option key={sg.id} value={sg.id}>
-                  {sg.code} — {sg.description}
-                </option>
-              ))}
-            </select>
-            <ChevronDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          </div>
+          <Combobox
+            options={subGroupOptions}
+            value={accountSubGroupId}
+            onChange={setAccountSubGroupId}
+            icon={Layers}
+            disabled={!accountGroupId}
+            placeholder={
+              !accountGroupId
+                ? "Select an Account Group first"
+                : availableSubGroups.length === 0
+                  ? "No sub-groups in this group — create one first"
+                  : "Search sub-groups..."
+            }
+            emptyMessage="No sub-groups match your search."
+            aria-label="Account Sub-Group"
+          />
         </div>
 
         {/* Flags */}
@@ -326,21 +329,14 @@ export default function GLForm({ initial }: { initial?: GLFormInitial }) {
         <div>
           <label className="text-sm font-medium text-slate-800">Parent Ledger</label>
           <p className="mb-2 text-xs text-slate-500">Optional — nests this ledger under another for hierarchy/roll-up.</p>
-          <div className="relative">
-            <select
-              value={parentId}
-              onChange={(e) => setParentId(e.target.value)}
-              className="w-full appearance-none rounded-lg border border-slate-200 py-2.5 pl-3.5 pr-10 text-sm text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
-            >
-              <option value="">None (top-level)</option>
-              {parentOptions.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.code} — {p.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          </div>
+          <Combobox
+            options={parentLedgerOptions}
+            value={parentId}
+            onChange={setParentId}
+            placeholder="Search ledgers... (leave blank for top-level)"
+            emptyMessage="No ledgers match your search."
+            aria-label="Parent Ledger"
+          />
         </div>
       </div>
 

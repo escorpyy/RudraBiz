@@ -2,8 +2,9 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Network, Save, MapPin, ShieldCheck } from "lucide-react";
+import { ChevronDown, Network, Layers, MapPinned, UserRound, Save, MapPin, ShieldCheck } from "lucide-react";
 import { ACCOUNT_TYPES, type AccountType, type RecordStatus } from "@/lib/constants";
+import Combobox, { type ComboboxOption } from "@/components/shared/Combobox";
 
 type SubGroupOption = { id: number; code: string; description: string; isActive: boolean };
 type AccountGroupOption = {
@@ -106,6 +107,28 @@ export default function PartyForm({ initial }: { initial?: PartyFormInitial }) {
   const availableSubGroups = useMemo(
     () => (selectedGroup ? selectedGroup.subGroups.filter((sg) => sg.isActive) : []),
     [selectedGroup]
+  );
+
+  const accountGroupOptions: ComboboxOption[] = useMemo(
+    () =>
+      accountGroups.map((g) => ({
+        value: String(g.id),
+        label: `${g.code} — ${g.description}`,
+        description: ACCOUNT_TYPES[g.type].label,
+      })),
+    [accountGroups]
+  );
+  const subGroupOptions: ComboboxOption[] = useMemo(
+    () => availableSubGroups.map((sg) => ({ value: String(sg.id), label: `${sg.code} — ${sg.description}` })),
+    [availableSubGroups]
+  );
+  const subAreaOptions: ComboboxOption[] = useMemo(
+    () => subAreas.map((sa) => ({ value: String(sa.id), label: sa.name, description: sa.areaName })),
+    [subAreas]
+  );
+  const agentOptions: ComboboxOption[] = useMemo(
+    () => agents.map((a) => ({ value: String(a.id), label: a.name, description: a.code })),
+    [agents]
   );
 
   const showCustomerFields = glType === "CUSTOMER" || glType === "BOTH";
@@ -235,24 +258,15 @@ export default function PartyForm({ initial }: { initial?: PartyFormInitial }) {
                 Account Group <span className="text-rose-500">*</span>
               </label>
               <p className={hintClass}>Select the account group this party's ledger belongs to.</p>
-              <div className="relative">
-                <Network size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500" />
-                <select
-                  value={accountGroupId}
-                  onChange={(e) => handleGroupChange(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-slate-200 py-2.5 pl-10 pr-10 text-sm text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
-                >
-                  <option value="">
-                    {accountGroups.length === 0 ? "No account groups available — create one first" : "Select an account group"}
-                  </option>
-                  {accountGroups.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.code} — {g.description} ({ACCOUNT_TYPES[g.type].label})
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              </div>
+              <Combobox
+                options={accountGroupOptions}
+                value={accountGroupId}
+                onChange={handleGroupChange}
+                icon={Network}
+                placeholder={accountGroups.length === 0 ? "No account groups available — create one first" : "Search account groups..."}
+                emptyMessage="No account groups match your search."
+                aria-label="Account Group"
+              />
             </div>
 
             <div>
@@ -262,28 +276,22 @@ export default function PartyForm({ initial }: { initial?: PartyFormInitial }) {
               <p className={hintClass}>
                 {accountGroupId ? "Usually Accounts Receivable (customer) or Accounts Payable (vendor)." : "Select an Account Group first."}
               </p>
-              <div className="relative">
-                <select
-                  value={accountSubGroupId}
-                  onChange={(e) => setAccountSubGroupId(e.target.value)}
-                  disabled={!accountGroupId}
-                  className="w-full appearance-none rounded-lg border border-slate-200 py-2.5 pl-3.5 pr-10 text-sm text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand disabled:bg-slate-50 disabled:text-slate-400"
-                >
-                  <option value="">
-                    {!accountGroupId
-                      ? "Select an Account Group first"
-                      : availableSubGroups.length === 0
-                        ? "No sub-groups in this group — create one first"
-                        : "Select a sub-group"}
-                  </option>
-                  {availableSubGroups.map((sg) => (
-                    <option key={sg.id} value={sg.id}>
-                      {sg.code} — {sg.description}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              </div>
+              <Combobox
+                options={subGroupOptions}
+                value={accountSubGroupId}
+                onChange={setAccountSubGroupId}
+                icon={Layers}
+                disabled={!accountGroupId}
+                placeholder={
+                  !accountGroupId
+                    ? "Select an Account Group first"
+                    : availableSubGroups.length === 0
+                      ? "No sub-groups in this group — create one first"
+                      : "Search sub-groups..."
+                }
+                emptyMessage="No sub-groups match your search."
+                aria-label="Account Sub-Group"
+              />
             </div>
           </div>
         </div>
@@ -375,40 +383,28 @@ export default function PartyForm({ initial }: { initial?: PartyFormInitial }) {
             <div>
               <label className={labelClass}>Sub-Area</label>
               <p className={hintClass}>Optional — region this party is based in.</p>
-              <div className="relative">
-                <select
-                  value={subAreaId}
-                  onChange={(e) => setSubAreaId(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-slate-200 py-2.5 pl-3.5 pr-10 text-sm text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
-                >
-                  <option value="">{subAreas.length === 0 ? "No sub-areas available" : "None"}</option>
-                  {subAreas.map((sa) => (
-                    <option key={sa.id} value={sa.id}>
-                      {sa.areaName} — {sa.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              </div>
+              <Combobox
+                options={subAreaOptions}
+                value={subAreaId}
+                onChange={setSubAreaId}
+                icon={MapPinned}
+                placeholder={subAreas.length === 0 ? "No sub-areas available" : "Search sub-areas..."}
+                emptyMessage="No sub-areas match your search."
+                aria-label="Sub-Area"
+              />
             </div>
             <div>
               <label className={labelClass}>Agent</label>
               <p className={hintClass}>Optional — sales/purchase agent linked to this party.</p>
-              <div className="relative">
-                <select
-                  value={agentId}
-                  onChange={(e) => setAgentId(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-slate-200 py-2.5 pl-3.5 pr-10 text-sm text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
-                >
-                  <option value="">{agents.length === 0 ? "No agents available" : "None"}</option>
-                  {agents.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.code} — {a.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              </div>
+              <Combobox
+                options={agentOptions}
+                value={agentId}
+                onChange={setAgentId}
+                icon={UserRound}
+                placeholder={agents.length === 0 ? "No agents available" : "Search agents..."}
+                emptyMessage="No agents match your search."
+                aria-label="Agent"
+              />
             </div>
           </div>
         </div>

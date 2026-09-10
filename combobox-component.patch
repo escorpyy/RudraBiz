@@ -1,0 +1,439 @@
+diff --git a/docs/COMPONENTS.md b/docs/COMPONENTS.md
+index 3191a80..ef3af04 100644
+--- a/docs/COMPONENTS.md
++++ b/docs/COMPONENTS.md
+@@ -17,12 +17,33 @@ data, reports) and what it would replace.
+ ## 1. Input & Selection
+ 
+ ### Combobox (searchable select)
++**✅ Built** — `src/components/shared/Combobox.tsx` (+ `src/lib/hooks.ts` for
++`useDebouncedValue`, used internally for the async mode). Live example:
++the Area picker on `SubAreaForm` (`master/areas/sub-areas/new`).
++
+ Text input + filterable dropdown, single-select. Type to narrow, click to pick.
+ **Replaces:** every plain `<select>` currently used for Account Group, Sub-Group,
+ Area, Sub-Area, Agent pickers. Fine today at 10–50 rows; becomes unusable once
+ Ledger or Party lists grow past ~100 rows — this is your highest-leverage build,
+ because nearly every voucher and master form needs "pick a ledger."
+ 
++Supports both modes out of the box:
++- **Client-side filtered** (default) — pass a static `options` array, it
++  filters locally as you type. Use this for anything under ~200 options.
++- **Async** — pass `onQueryChange` and update `options` yourself in response
++  (already debounced internally). Use this once a list is large enough that
++  loading it all upfront isn't reasonable.
++
++```tsx
++<Combobox
++  options={areas.map((a) => ({ value: String(a.id), label: a.name, description: a.code }))}
++  value={areaId}
++  onChange={setAreaId}
++  icon={MapPinned}
++  placeholder="Search areas..."
++/>
++```
++
+ ### Async Combobox
+ Same as above, but options are fetched from the API as the user types
+ (debounced), instead of loading the full list upfront.
+@@ -289,9 +310,11 @@ dropdown), a fully generic form can become harder to read than five explicit
+ ones. Worth doing once you have 4–5 near-identical masters and can see the
+ real shared shape, not before.
+ 
+-### `useDebouncedSearch` hook
+-Wraps a search input with a debounce timer before firing the API call.
+-**Where:** any Async Combobox or server-driven Data Table.
++### `useDebouncedValue` hook
++**✅ Built** — `src/lib/hooks.ts`. Wraps any changing value (e.g. a search
++input) with a debounce timer before it's used for an API call. Powers the
++async mode of `Combobox` above; reusable anywhere else the same need comes up
++(e.g. a live server-driven Data Table search box).
+ 
+ ### `usePagination` hook
+ Shared page/pageSize state + slice logic, instead of each table
+@@ -309,7 +332,7 @@ a good "modernness" win since it's already fully supported at the data layer.
+ 
+ ## Suggested build order (highest leverage first)
+ 
+-1. **Combobox** — every form you build from here on needs it.
++1. ~~**Combobox**~~ — ✅ built, see above.
+ 2. **Dynamic Line-Item Editor + Balance Indicator** — unlocks the entire
+    Transactions module (Journal/Cash-Bank Voucher, Sales, Purchase).
+ 3. **Generic CRUD API factory + `usePagination` hook** — stops the
+diff --git a/src/components/areas/SubAreaForm.tsx b/src/components/areas/SubAreaForm.tsx
+index 6aefe74..145242a 100644
+--- a/src/components/areas/SubAreaForm.tsx
++++ b/src/components/areas/SubAreaForm.tsx
+@@ -3,6 +3,7 @@
+ import { useRouter, useSearchParams } from "next/navigation";
+ import { useEffect, useState } from "react";
+ import { ChevronDown, MapPinned, Save } from "lucide-react";
++import Combobox, { type ComboboxOption } from "@/components/shared/Combobox";
+ import type { RecordStatus } from "@/lib/constants";
+ 
+ type AreaOption = { id: number; code: string; name: string; isActive: boolean };
+@@ -39,6 +40,12 @@ export default function SubAreaForm({ initial }: { initial?: SubAreaFormInitial
+       .catch(() => setAreas([]));
+   }, []);
+ 
++  const areaOptions: ComboboxOption[] = areas.map((a) => ({
++    value: String(a.id),
++    label: a.name,
++    description: a.code,
++  }));
++
+   async function handleSubmit(e: React.FormEvent) {
+     e.preventDefault();
+     setError(null);
+@@ -99,24 +106,15 @@ export default function SubAreaForm({ initial }: { initial?: SubAreaFormInitial
+             Area <span className="text-rose-500">*</span>
+           </label>
+           <p className="mb-2 text-xs text-slate-500">Select the area this sub-area belongs to.</p>
+-          <div className="relative">
+-            <MapPinned size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500" />
+-            <select
+-              value={areaId}
+-              onChange={(e) => setAreaId(e.target.value)}
+-              className="w-full appearance-none rounded-lg border border-slate-200 py-2.5 pl-10 pr-10 text-sm text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+-            >
+-              <option value="">
+-                {areas.length === 0 ? "No areas available — create one first" : "Select an area"}
+-              </option>
+-              {areas.map((a) => (
+-                <option key={a.id} value={a.id}>
+-                  {a.code} — {a.name}
+-                </option>
+-              ))}
+-            </select>
+-            <ChevronDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+-          </div>
++          <Combobox
++            options={areaOptions}
++            value={areaId}
++            onChange={setAreaId}
++            icon={MapPinned}
++            placeholder={areas.length === 0 ? "No areas available — create one first" : "Search areas..."}
++            emptyMessage="No areas match your search."
++            aria-label="Area"
++          />
+         </div>
+ 
+         {/* Code / Name */}
+diff --git a/src/components/shared/Combobox.tsx b/src/components/shared/Combobox.tsx
+new file mode 100644
+index 0000000..3319c69
+--- /dev/null
++++ b/src/components/shared/Combobox.tsx
+@@ -0,0 +1,284 @@
++"use client";
++
++import { useEffect, useId, useMemo, useRef, useState } from "react";
++import { Check, ChevronDown, Loader2, X, type LucideIcon } from "lucide-react";
++import { useDebouncedValue } from "@/lib/hooks";
++
++export type ComboboxOption = {
++  /** Value submitted to the form / API (e.g. the record's id as a string). */
++  value: string;
++  /** Primary label shown in the input and the option list. */
++  label: string;
++  /** Optional secondary line under the label (e.g. a parent's name). */
++  description?: string;
++};
++
++export type ComboboxProps = {
++  options: ComboboxOption[];
++  value: string;
++  onChange: (value: string) => void;
++  placeholder?: string;
++  emptyMessage?: string;
++  /** Leading icon, matching the pattern used by the app's existing selects. */
++  icon?: LucideIcon;
++  disabled?: boolean;
++  /** Show a spinner in place of the chevron (e.g. while options are loading). */
++  loading?: boolean;
++  /**
++   * Provide this to make the Combobox "async": instead of filtering
++   * `options` locally, the component calls this (debounced) as the user
++   * types and expects the caller to update `options` in response. Omit it
++   * for a plain client-side-filtered Combobox.
++   */
++  onQueryChange?: (query: string) => void;
++  /** Debounce delay in ms for `onQueryChange`. Defaults to 300. */
++  debounceMs?: number;
++  /** Show a clear ("x") button once a value is selected. Defaults to true. */
++  clearable?: boolean;
++  id?: string;
++  "aria-label"?: string;
++};
++
++/**
++ * A searchable single-select dropdown: type to filter, click (or Enter) to
++ * pick, arrow keys to navigate, Escape to close. Styled to match the app's
++ * existing `<select>` fields exactly (see AreaForm/SubAreaForm) so it's a
++ * drop-in replacement once a list of options grows too long to scan.
++ *
++ * Client-side filtering by default. Pass `onQueryChange` + externally
++ * filtered `options` to make it async (see docs/COMPONENTS.md → Async
++ * Combobox).
++ */
++export default function Combobox({
++  options,
++  value,
++  onChange,
++  placeholder = "Select...",
++  emptyMessage = "No results found.",
++  icon: Icon,
++  disabled = false,
++  loading = false,
++  onQueryChange,
++  debounceMs = 300,
++  clearable = true,
++  id,
++  "aria-label": ariaLabel,
++}: ComboboxProps) {
++  const generatedId = useId();
++  const baseId = id ?? generatedId;
++  const listboxId = `${baseId}-listbox`;
++
++  const [open, setOpen] = useState(false);
++  const [query, setQuery] = useState("");
++  const [highlightedIndex, setHighlightedIndex] = useState(0);
++
++  const rootRef = useRef<HTMLDivElement>(null);
++  const inputRef = useRef<HTMLInputElement>(null);
++  const listRef = useRef<HTMLUListElement>(null);
++
++  const isAsync = Boolean(onQueryChange);
++  const debouncedQuery = useDebouncedValue(query, debounceMs);
++
++  useEffect(() => {
++    if (isAsync && open) onQueryChange!(debouncedQuery);
++    // eslint-disable-next-line react-hooks/exhaustive-deps
++  }, [debouncedQuery, isAsync, open]);
++
++  const selected = useMemo(() => options.find((o) => o.value === value) ?? null, [options, value]);
++
++  const filtered = useMemo(() => {
++    if (isAsync) return options; // caller already filtered
++    const q = query.trim().toLowerCase();
++    if (!q) return options;
++    return options.filter(
++      (o) => o.label.toLowerCase().includes(q) || o.description?.toLowerCase().includes(q)
++    );
++  }, [options, query, isAsync]);
++
++  // Close on outside click.
++  useEffect(() => {
++    function onPointerDown(e: MouseEvent) {
++      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
++        setOpen(false);
++        setQuery("");
++      }
++    }
++    document.addEventListener("mousedown", onPointerDown);
++    return () => document.removeEventListener("mousedown", onPointerDown);
++  }, []);
++
++  useEffect(() => {
++    setHighlightedIndex(0);
++  }, [filtered.length, open]);
++
++  // Keep the highlighted option scrolled into view.
++  useEffect(() => {
++    if (!open) return;
++    const el = listRef.current?.children[highlightedIndex] as HTMLElement | undefined;
++    el?.scrollIntoView({ block: "nearest" });
++  }, [highlightedIndex, open]);
++
++  function openList() {
++    if (disabled) return;
++    setOpen(true);
++  }
++
++  function selectOption(option: ComboboxOption) {
++    onChange(option.value);
++    setOpen(false);
++    setQuery("");
++    inputRef.current?.blur();
++  }
++
++  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
++    if (disabled) return;
++
++    if (!open && (e.key === "ArrowDown" || e.key === "Enter")) {
++      e.preventDefault();
++      openList();
++      return;
++    }
++    if (!open) return;
++
++    switch (e.key) {
++      case "ArrowDown":
++        e.preventDefault();
++        setHighlightedIndex((i) => (filtered.length === 0 ? 0 : (i + 1) % filtered.length));
++        break;
++      case "ArrowUp":
++        e.preventDefault();
++        setHighlightedIndex((i) => (filtered.length === 0 ? 0 : (i - 1 + filtered.length) % filtered.length));
++        break;
++      case "Enter":
++        e.preventDefault();
++        if (filtered[highlightedIndex]) selectOption(filtered[highlightedIndex]);
++        break;
++      case "Escape":
++        e.preventDefault();
++        setOpen(false);
++        setQuery("");
++        inputRef.current?.blur();
++        break;
++      case "Tab":
++        setOpen(false);
++        setQuery("");
++        break;
++    }
++  }
++
++  const displayValue = open ? query : selected?.label ?? "";
++  const showClear = clearable && !open && Boolean(selected) && !disabled;
++
++  return (
++    <div ref={rootRef} className="relative">
++      {Icon && (
++        <Icon
++          size={16}
++          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500"
++        />
++      )}
++
++      <input
++        ref={inputRef}
++        id={baseId}
++        role="combobox"
++        aria-expanded={open}
++        aria-controls={listboxId}
++        aria-autocomplete="list"
++        aria-label={ariaLabel}
++        aria-activedescendant={open && filtered[highlightedIndex] ? `${listboxId}-opt-${highlightedIndex}` : undefined}
++        disabled={disabled}
++        value={displayValue}
++        placeholder={placeholder}
++        onFocus={() => {
++          openList();
++          setQuery("");
++        }}
++        onChange={(e) => {
++          setQuery(e.target.value);
++          if (!open) setOpen(true);
++        }}
++        onKeyDown={handleKeyDown}
++        autoComplete="off"
++        className={`w-full appearance-none rounded-lg border border-slate-200 py-2.5 text-sm text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 ${
++          Icon ? "pl-10" : "pl-3.5"
++        } ${showClear ? "pr-16" : "pr-10"}`}
++      />
++
++      <div className="pointer-events-none absolute right-3.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
++        {loading && <Loader2 size={14} className="animate-spin text-slate-400" />}
++      </div>
++
++      {showClear && (
++        <button
++          type="button"
++          tabIndex={-1}
++          onClick={(e) => {
++            e.stopPropagation();
++            onChange("");
++            setQuery("");
++            inputRef.current?.focus();
++          }}
++          className="absolute right-8 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
++          aria-label="Clear selection"
++        >
++          <X size={14} />
++        </button>
++      )}
++
++      <ChevronDown
++        size={16}
++        className={`pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition-transform ${
++          open ? "rotate-180" : ""
++        }`}
++      />
++
++      {open && (
++        <ul
++          ref={listRef}
++          id={listboxId}
++          role="listbox"
++          className="absolute z-20 mt-1.5 max-h-64 w-full overflow-auto rounded-lg border border-slate-200 bg-white py-1.5 text-sm shadow-lg"
++        >
++          {loading && filtered.length === 0 && (
++            <li className="px-3.5 py-2.5 text-slate-400">Loading...</li>
++          )}
++          {!loading && filtered.length === 0 && (
++            <li className="px-3.5 py-2.5 text-slate-400">{emptyMessage}</li>
++          )}
++          {filtered.map((option, i) => {
++            const isSelected = option.value === value;
++            const isHighlighted = i === highlightedIndex;
++            return (
++              <li
++                key={option.value}
++                id={`${listboxId}-opt-${i}`}
++                role="option"
++                aria-selected={isSelected}
++                onMouseEnter={() => setHighlightedIndex(i)}
++                onMouseDown={(e) => {
++                  // preventDefault so the input doesn't blur before onClick fires.
++                  e.preventDefault();
++                  selectOption(option);
++                }}
++                className={`flex cursor-pointer items-center justify-between gap-2 px-3.5 py-2.5 ${
++                  isHighlighted ? "bg-blue-50" : ""
++                }`}
++              >
++                <div className="min-w-0">
++                  <div className={`truncate ${isHighlighted ? "text-brand" : "text-slate-800"}`}>
++                    {option.label}
++                  </div>
++                  {option.description && (
++                    <div className="truncate text-xs text-slate-400">{option.description}</div>
++                  )}
++                </div>
++                {isSelected && <Check size={15} className="shrink-0 text-brand" />}
++              </li>
++            );
++          })}
++        </ul>
++      )}
++    </div>
++  );
++}
+diff --git a/src/lib/hooks.ts b/src/lib/hooks.ts
+new file mode 100644
+index 0000000..8fa2eff
+--- /dev/null
++++ b/src/lib/hooks.ts
+@@ -0,0 +1,22 @@
++import { useEffect, useState } from "react";
++
++/**
++ * Returns a debounced copy of `value` that only updates after `delayMs` has
++ * passed without `value` changing. Use this to avoid firing an API call (or
++ * any other expensive work) on every keystroke — e.g. an async Combobox's
++ * search query, or a table's free-text filter.
++ *
++ * const query = useState("")[0];
++ * const debouncedQuery = useDebouncedValue(query, 300);
++ * useEffect(() => { fetch(`/api/x?q=${debouncedQuery}`) }, [debouncedQuery]);
++ */
++export function useDebouncedValue<T>(value: T, delayMs = 300): T {
++  const [debounced, setDebounced] = useState(value);
++
++  useEffect(() => {
++    const timer = setTimeout(() => setDebounced(value), delayMs);
++    return () => clearTimeout(timer);
++  }, [value, delayMs]);
++
++  return debounced;
++}

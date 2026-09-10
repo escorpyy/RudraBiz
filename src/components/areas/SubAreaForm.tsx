@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ChevronDown, MapPinned, Save } from "lucide-react";
+import Combobox, { type ComboboxOption } from "@/components/shared/Combobox";
 import type { RecordStatus } from "@/lib/constants";
 
 type AreaOption = { id: number; code: string; name: string; isActive: boolean };
@@ -38,6 +39,12 @@ export default function SubAreaForm({ initial }: { initial?: SubAreaFormInitial 
       .then((rows: AreaOption[]) => setAreas(rows.filter((a) => a.isActive)))
       .catch(() => setAreas([]));
   }, []);
+
+  const areaOptions: ComboboxOption[] = areas.map((a) => ({
+    value: String(a.id),
+    label: a.name,
+    description: a.code,
+  }));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -99,24 +106,15 @@ export default function SubAreaForm({ initial }: { initial?: SubAreaFormInitial 
             Area <span className="text-rose-500">*</span>
           </label>
           <p className="mb-2 text-xs text-slate-500">Select the area this sub-area belongs to.</p>
-          <div className="relative">
-            <MapPinned size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500" />
-            <select
-              value={areaId}
-              onChange={(e) => setAreaId(e.target.value)}
-              className="w-full appearance-none rounded-lg border border-slate-200 py-2.5 pl-10 pr-10 text-sm text-slate-800 outline-none focus:border-brand focus:ring-1 focus:ring-brand"
-            >
-              <option value="">
-                {areas.length === 0 ? "No areas available — create one first" : "Select an area"}
-              </option>
-              {areas.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.code} — {a.name}
-                </option>
-              ))}
-            </select>
-            <ChevronDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          </div>
+          <Combobox
+            options={areaOptions}
+            value={areaId}
+            onChange={setAreaId}
+            icon={MapPinned}
+            placeholder={areas.length === 0 ? "No areas available — create one first" : "Search areas..."}
+            emptyMessage="No areas match your search."
+            aria-label="Area"
+          />
         </div>
 
         {/* Code / Name */}

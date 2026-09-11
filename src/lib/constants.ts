@@ -63,6 +63,36 @@ export const STATUS_STYLES: Record<RecordStatus, { label: string; badge: string;
   INACTIVE: { label: "Inactive", badge: "bg-slate-100 text-slate-500", dot: "bg-slate-400" },
 };
 
+// Matches the "ProductType" enum in prisma/schema.prisma.
+export type ProductType = "STOCK" | "NON_STOCK" | "SERVICE" | "FIXED_ASSET" | "BUNDLE";
+
+export const PRODUCT_TYPES: Record<ProductType, { label: string; badge: string; dot: string }> = {
+  STOCK: { label: "Stock", badge: "bg-blue-50 text-blue-700", dot: "bg-blue-500" },
+  NON_STOCK: { label: "Non-Stock", badge: "bg-violet-50 text-violet-700", dot: "bg-violet-500" },
+  SERVICE: { label: "Service", badge: "bg-amber-50 text-amber-700", dot: "bg-amber-500" },
+  FIXED_ASSET: { label: "Fixed Asset", badge: "bg-rose-50 text-rose-700", dot: "bg-rose-500" },
+  BUNDLE: { label: "Bundle", badge: "bg-emerald-50 text-emerald-700", dot: "bg-emerald-500" },
+};
+
+export const PRODUCT_TYPE_LIST = Object.keys(PRODUCT_TYPES) as ProductType[];
+
+// Matches the "ValuationMethod" enum in prisma/schema.prisma.
+export type ValuationMethod = "FIFO" | "WEIGHTED_AVERAGE" | "STANDARD_COST";
+
+export const VALUATION_METHODS: Record<ValuationMethod, { label: string }> = {
+  FIFO: { label: "FIFO" },
+  WEIGHTED_AVERAGE: { label: "Weighted Average" },
+  STANDARD_COST: { label: "Standard Cost" },
+};
+
+// Matches the "DepreciationMethod" enum in prisma/schema.prisma.
+export type DepreciationMethod = "STRAIGHT_LINE" | "WRITTEN_DOWN_VALUE";
+
+export const DEPRECIATION_METHODS: Record<DepreciationMethod, { label: string }> = {
+  STRAIGHT_LINE: { label: "Straight Line" },
+  WRITTEN_DOWN_VALUE: { label: "Written Down Value" },
+};
+
 // Sidebar navigation tree. A node with `children` renders as a collapsible
 // section; a leaf has `href` and links directly. Nesting can go to any depth
 // (see "Inventory Reports" below, which nests a third level under Inventory).

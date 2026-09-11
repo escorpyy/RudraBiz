@@ -124,6 +124,26 @@ model GeneralLedger {
 
   subLedgers        SubLedger[]
 
+  // Product-catalog GL linkages — one array field per named relation
+  // on StockDetail/NonStockDetail/ServiceDetail/FixedAssetDetail/BundleDetail.
+  // Kept as separate relations (not a single generic FK) because each
+  // represents a distinct accounting role a GL can play for a product.
+  stockOpeningFor            StockDetail[]      @relation("StockOpeningGL")
+  stockClosingPLFor          StockDetail[]      @relation("StockClosingPLGL")
+  stockClosingBSFor          StockDetail[]      @relation("StockClosingBSGL")
+  stockPurchaseFor           StockDetail[]      @relation("StockPurchaseGL")
+  stockPurchaseReturnFor     StockDetail[]      @relation("StockPurchaseReturnGL")
+  stockSalesFor              StockDetail[]      @relation("StockSalesGL")
+  stockSalesReturnFor        StockDetail[]      @relation("StockSalesReturnGL")
+  nonStockSalesFor           NonStockDetail[]   @relation("NonStockSalesGL")
+  nonStockPurchaseFor        NonStockDetail[]   @relation("NonStockPurchaseGL")
+  serviceSalesFor            ServiceDetail[]    @relation("ServiceSalesGL")
+  servicePurchaseFor         ServiceDetail[]    @relation("ServicePurchaseGL")
+  fixedAssetFor              FixedAssetDetail[] @relation("FixedAssetGL")
+  fixedAssetAccumDeprFor     FixedAssetDetail[] @relation("FixedAssetAccumDeprGL")
+  fixedAssetDeprExpenseFor   FixedAssetDetail[] @relation("FixedAssetDeprExpenseGL")
+  bundleSalesFor             BundleDetail[]     @relation("BundleSalesGL")
+
   @@index([accountSubGroupId])
   @@index([parentId])
   @@index([glType])
@@ -220,6 +240,8 @@ model Party {
   vendorDetail      VendorDetail?
 
   subLedgers        SubLedger[]
+
+  stockDefaultVendorFor StockDetail[] @relation("StockDefaultVendor")
 
   @@index([panNo])
   @@index([subAreaId])
@@ -436,4 +458,407 @@ model AuditLog {
 
   @@index([tableName, recordId])
   @@index([changedAt])
+}
+
+// ============================================================
+// PRODUCT CATALOG
+// ============================================================
+// Five product types share one Product "header" row plus a
+// type-specific detail table (1:1, PK = FK, Cascade on delete of
+// the header). Consistency between Product.type and "exactly one
+// matching detail row" is not expressible in the Prisma schema
+// language, so it's enforced by triggers in the migration SQL
+// (fn_check_product_type_match / fn_check_product_single_detail).
+// ============================================================
+
+enum ProductType {
+  STOCK
+  NON_STOCK
+  SERVICE
+  FIXED_ASSET
+  BUNDLE
+}
+
+enum ValuationMethod {
+  FIFO
+  WEIGHTED_AVERAGE
+  STANDARD_COST
+}
+
+enum DepreciationMethod {
+  STRAIGHT_LINE
+  WRITTEN_DOWN_VALUE
+}
+
+// ------------------------------------------------------------
+// PRODUCT GROUP / SUBGROUP — same Group/SubGroup pattern as
+// AccountGroup/AccountSubGroup, for consistency across the schema.
+// ------------------------------------------------------------
+
+model ProductGroup {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique @db.VarChar(10)
+  name      String   @unique @db.VarChar(50)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subGroups ProductSubGroup[]
+}
+
+model ProductSubGroup {
+  id             Int          @id @default(autoincrement())
+  code           String       @db.VarChar(10)
+  name           String       @db.VarChar(50)
+  productGroupId Int
+  productGroup   ProductGroup @relation(fields: [productGroupId], references: [id], onDelete: Restrict)
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  products       Product[]
+
+  @@unique([productGroupId, code])
+  @@unique([productGroupId, name])
+}
+
+// ------------------------------------------------------------
+// PRODUCT UNIT — decimalPlaces matters practically: PCS should
+// not accept 2.5, but KG/LTR should. Enforced at the app layer
+// using this, plus a DB-level 0–6 sanity CHECK.
+// ------------------------------------------------------------
+
+model ProductUnit {
+  id            Int      @id @default(autoincrement())
+  code          String   @unique @db.VarChar(10) // "PCS", "KG", "BOX"
+  name          String   @unique @db.VarChar(50)
+  decimalPlaces Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  stockBaseFor     StockDetail[]    @relation("StockBaseUnit")
+  nonStockUnitFor  NonStockDetail[] @relation("NonStockUnit")
+  serviceUnitFor   ServiceDetail[]  @relation("ServiceUnit")
+  alternateUnitFor AlternateUnit[]  @relation("AltUnit")
+}
+
+// ------------------------------------------------------------
+// TAX RATE — every STOCK/NON_STOCK/SERVICE item needs a rate for
+// invoicing & returns.
+// ------------------------------------------------------------
+
+model TaxRate {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique @db.VarChar(10)
+  name        String   @db.VarChar(50) // "GST 13%", "VAT 5%"
+  ratePercent Decimal  @db.Decimal(5, 2)
+  hsnSacCode  String?  @db.VarChar(20) // HSN for goods, SAC for services
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  stockDetails    StockDetail[]
+  nonStockDetails NonStockDetail[]
+  serviceDetails  ServiceDetail[]
+}
+
+// ------------------------------------------------------------
+// STOCK CATEGORY & LOCATION
+// ------------------------------------------------------------
+
+model StockCategory {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique @db.VarChar(10)
+  name      String   @unique @db.VarChar(50)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stockDetails StockDetail[]
+}
+
+model Location {
+  id   Int    @id @default(autoincrement())
+  code String @unique @db.VarChar(10)
+  name String @db.VarChar(50)
+
+  parentId Int?
+  parent   Location?  @relation("LocationHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children Location[] @relation("LocationHierarchy")
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stockDetails      StockDetail[]      @relation("StockDefaultLocation")
+  fixedAssetDetails FixedAssetDetail[] @relation("FixedAssetLocation")
+
+  @@index([parentId])
+}
+
+// ------------------------------------------------------------
+// PRODUCT — parent header for all five types
+// ------------------------------------------------------------
+
+model Product {
+  id          Int          @id @default(autoincrement())
+  code        String       @unique @db.VarChar(10)
+  description String       @db.VarChar(256) // not globally unique — see ProductSubGroup note
+  shortName   String?      @db.VarChar(30)
+  barcode     String?      @unique @db.VarChar(64)
+  type        ProductType
+
+  productSubGroupId Int
+  productSubGroup   ProductSubGroup @relation(fields: [productSubGroupId], references: [id], onDelete: Restrict)
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stockDetail      StockDetail?
+  nonStockDetail   NonStockDetail?
+  serviceDetail    ServiceDetail?
+  fixedAssetDetail FixedAssetDetail?
+  bundleDetail     BundleDetail?
+
+  bundleComponentOf BundleComponent[] @relation("BundleComponentProduct")
+
+  @@index([productSubGroupId])
+  @@index([type])
+  @@index([type, isActive])
+  @@index([description])
+}
+
+// ------------------------------------------------------------
+// STOCK DETAIL
+// ------------------------------------------------------------
+
+model StockDetail {
+  id        Int     @id @default(autoincrement())
+  productId Int     @unique
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  baseUnitId Int
+  baseUnit   ProductUnit @relation("StockBaseUnit", fields: [baseUnitId], references: [id], onDelete: Restrict)
+
+  stockCategoryId Int?
+  stockCategory   StockCategory? @relation(fields: [stockCategoryId], references: [id], onDelete: SetNull)
+
+  defaultLocationId Int?
+  defaultLocation   Location? @relation("StockDefaultLocation", fields: [defaultLocationId], references: [id], onDelete: SetNull)
+
+  taxRateId Int?
+  taxRate   TaxRate? @relation(fields: [taxRateId], references: [id], onDelete: SetNull)
+
+  valuationMethod ValuationMethod @default(WEIGHTED_AVERAGE)
+  tracksBatch     Boolean         @default(false)
+  tracksExpiry    Boolean         @default(false)
+
+  purchaseRate Decimal? @db.Decimal(18, 6)
+  salesRate    Decimal? @db.Decimal(18, 6)
+  mrp          Decimal? @db.Decimal(18, 6)
+  tradePrice   Decimal? @db.Decimal(18, 6)
+
+  minStock     Decimal? @db.Decimal(18, 6)
+  maxStock     Decimal? @db.Decimal(18, 6)
+  reorderLevel Decimal? @db.Decimal(18, 6)
+  reorderQty   Decimal? @db.Decimal(18, 6)
+
+  openingGLId   Int?
+  openingGL     GeneralLedger? @relation("StockOpeningGL", fields: [openingGLId], references: [id], onDelete: SetNull)
+  closingPLGLId Int?
+  closingPLGL   GeneralLedger? @relation("StockClosingPLGL", fields: [closingPLGLId], references: [id], onDelete: SetNull)
+  closingBSGLId Int?
+  closingBSGL   GeneralLedger? @relation("StockClosingBSGL", fields: [closingBSGLId], references: [id], onDelete: SetNull)
+
+  purchaseGLId       Int?
+  purchaseGL         GeneralLedger? @relation("StockPurchaseGL", fields: [purchaseGLId], references: [id], onDelete: SetNull)
+  purchaseReturnGLId Int?
+  purchaseReturnGL   GeneralLedger? @relation("StockPurchaseReturnGL", fields: [purchaseReturnGLId], references: [id], onDelete: SetNull)
+  salesGLId          Int?
+  salesGL            GeneralLedger? @relation("StockSalesGL", fields: [salesGLId], references: [id], onDelete: SetNull)
+  salesReturnGLId    Int?
+  salesReturnGL      GeneralLedger? @relation("StockSalesReturnGL", fields: [salesReturnGLId], references: [id], onDelete: SetNull)
+
+  defaultVendorId Int?
+  defaultVendor   Party? @relation("StockDefaultVendor", fields: [defaultVendorId], references: [id], onDelete: SetNull)
+
+  alternateUnits AlternateUnit[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([baseUnitId])
+  @@index([stockCategoryId])
+  @@index([defaultLocationId])
+  @@index([defaultVendorId])
+  @@index([taxRateId])
+  @@index([openingGLId])
+  @@index([closingPLGLId])
+  @@index([closingBSGLId])
+  @@index([purchaseGLId])
+  @@index([purchaseReturnGLId])
+  @@index([salesGLId])
+  @@index([salesReturnGLId])
+}
+
+// Flattened — one hop to base unit, no traversal, no cycle risk.
+// 1 unit (e.g. Box) = conversionFactor * baseUnit (e.g. 12 Pcs).
+// A trigger blocks unitId == the parent StockDetail's baseUnitId.
+model AlternateUnit {
+  id            Int         @id @default(autoincrement())
+  stockDetailId Int
+  stockDetail   StockDetail @relation(fields: [stockDetailId], references: [id], onDelete: Cascade)
+
+  unitId Int
+  unit   ProductUnit @relation("AltUnit", fields: [unitId], references: [id], onDelete: Restrict)
+
+  conversionFactor Decimal @db.Decimal(18, 6)
+
+  @@unique([stockDetailId, unitId])
+  @@index([unitId])
+}
+
+// ------------------------------------------------------------
+// NON-STOCK DETAIL — buy/sell, quantity not tracked
+// ------------------------------------------------------------
+
+model NonStockDetail {
+  id        Int     @id @default(autoincrement())
+  productId Int     @unique
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  unitId Int
+  unit   ProductUnit @relation("NonStockUnit", fields: [unitId], references: [id], onDelete: Restrict)
+
+  taxRateId Int?
+  taxRate   TaxRate? @relation(fields: [taxRateId], references: [id], onDelete: SetNull)
+
+  salesGLId    Int
+  salesGL      GeneralLedger @relation("NonStockSalesGL", fields: [salesGLId], references: [id], onDelete: Restrict)
+  purchaseGLId Int
+  purchaseGL   GeneralLedger @relation("NonStockPurchaseGL", fields: [purchaseGLId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([unitId])
+  @@index([taxRateId])
+  @@index([salesGLId])
+  @@index([purchaseGLId])
+}
+
+// ------------------------------------------------------------
+// SERVICE DETAIL
+// ------------------------------------------------------------
+
+model ServiceDetail {
+  id        Int     @id @default(autoincrement())
+  productId Int     @unique
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  unitId Int?
+  unit   ProductUnit? @relation("ServiceUnit", fields: [unitId], references: [id], onDelete: SetNull)
+  // usually "per hour"/"per visit" — optional since many services are lump-sum
+
+  taxRateId Int?
+  taxRate   TaxRate? @relation(fields: [taxRateId], references: [id], onDelete: SetNull)
+
+  salesGLId    Int
+  salesGL      GeneralLedger @relation("ServiceSalesGL", fields: [salesGLId], references: [id], onDelete: Restrict)
+  purchaseGLId Int
+  purchaseGL   GeneralLedger @relation("ServicePurchaseGL", fields: [purchaseGLId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([unitId])
+  @@index([taxRateId])
+  @@index([salesGLId])
+  @@index([purchaseGLId])
+}
+
+// ------------------------------------------------------------
+// FIXED ASSET DETAIL — needs three GLs to actually work for
+// depreciation accounting: the asset itself, accumulated
+// depreciation (contra-asset, balance sheet), and depreciation
+// expense (P&L). Without all three you can't post depreciation.
+// A running accumulatedDepreciation total is kept for quick
+// reference only — the authoritative trail should be a future
+// depreciation schedule/posting table, deferred deliberately for now.
+// ------------------------------------------------------------
+
+model FixedAssetDetail {
+  id        Int     @id @default(autoincrement())
+  productId Int     @unique
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  assetGLId               Int
+  assetGL                 GeneralLedger @relation("FixedAssetGL", fields: [assetGLId], references: [id], onDelete: Restrict)
+  accumulatedDeprGLId     Int
+  accumulatedDeprGL       GeneralLedger @relation("FixedAssetAccumDeprGL", fields: [accumulatedDeprGLId], references: [id], onDelete: Restrict)
+  depreciationExpenseGLId Int
+  depreciationExpenseGL   GeneralLedger @relation("FixedAssetDeprExpenseGL", fields: [depreciationExpenseGLId], references: [id], onDelete: Restrict)
+
+  locationId Int?
+  location   Location? @relation("FixedAssetLocation", fields: [locationId], references: [id], onDelete: SetNull)
+
+  purchaseDate    DateTime? @db.Date
+  originalCost    Decimal?  @db.Decimal(18, 6)
+  salvageValue    Decimal   @default(0) @db.Decimal(18, 6)
+  usefulLifeYears Int?
+
+  depreciationMethod      DepreciationMethod @default(STRAIGHT_LINE)
+  depreciationRatePercent Decimal?           @db.Decimal(5, 2) // for WDV, or manual override
+
+  accumulatedDepreciation Decimal @default(0) @db.Decimal(18, 6)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([locationId])
+  @@index([assetGLId])
+  @@index([accumulatedDeprGLId])
+  @@index([depreciationExpenseGLId])
+}
+
+// ------------------------------------------------------------
+// BUNDLE DETAIL + COMPONENTS
+// A bundle's own components may not themselves be BUNDLE-type
+// products (no nested bundles), and a bundle may not list itself
+// as a component — both enforced by trigger, since they require
+// cross-table lookups CHECK constraints can't express.
+// ------------------------------------------------------------
+
+model BundleDetail {
+  id        Int     @id @default(autoincrement())
+  productId Int     @unique
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  salesGLId Int
+  salesGL   GeneralLedger @relation("BundleSalesGL", fields: [salesGLId], references: [id], onDelete: Restrict)
+
+  bundlePrice Decimal? @db.Decimal(18, 6) // override; else sum of components
+
+  components BundleComponent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([salesGLId])
+}
+
+model BundleComponent {
+  id             Int          @id @default(autoincrement())
+  bundleDetailId Int
+  bundleDetail   BundleDetail @relation(fields: [bundleDetailId], references: [id], onDelete: Cascade)
+
+  componentProductId Int
+  componentProduct   Product @relation("BundleComponentProduct", fields: [componentProductId], references: [id], onDelete: Restrict)
+
+  quantity Decimal @db.Decimal(18, 6)
+
+  @@unique([bundleDetailId, componentProductId])
+  @@index([componentProductId])
 }

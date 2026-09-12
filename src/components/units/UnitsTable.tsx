@@ -3,9 +3,13 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, RotateCcw, Eye, Pencil, Trash2, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, RotateCcw, Eye, Pencil, Trash2, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight, CheckCircle2, XCircle } from "lucide-react";
 import StatusBadge from "@/components/account-groups/StatusBadge";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import { useRowSelection } from "@/components/shared/bulk-actions/useRowSelection";
+import { useBulkApi, type BulkResult } from "@/components/shared/bulk-actions/useBulkApi";
+import RowContextMenu, { type ContextMenuPosition } from "@/components/shared/bulk-actions/RowContextMenu";
+import BulkResultBanner from "@/components/shared/bulk-actions/BulkResultBanner";
 import type { RecordStatus } from "@/lib/constants";
 
 export type UnitRow = {
@@ -47,6 +51,15 @@ export default function UnitsTable({ rows }: { rows: UnitRow[] }) {
   const startIndex = filtered.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, filtered.length);
 
+  // Bulk selection: checkbox on each row, right-click to act on the
+  // current selection. Runs against the same per-row PATCH/DELETE
+  // endpoints the row action buttons already use — see useBulkApi.
+  const selection = useRowSelection(pageRows, (r) => r.id);
+  const { runBulkPatch, runBulkDelete, running } = useBulkApi("/api/product-units");
+  const [contextMenu, setContextMenu] = useState<ContextMenuPosition>(null);
+  const [bulkResult, setBulkResult] = useState<BulkResult | null>(null);
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+
   function resetFilters() {
     setSearch("");
     setStatusFilter("ALL");
@@ -68,6 +81,27 @@ export default function UnitsTable({ rows }: { rows: UnitRow[] }) {
     } finally {
       setDeleting(false);
     }
+  }
+
+  async function handleBulkActivate(isActive: boolean) {
+    const result = await runBulkPatch(Array.from(selection.selectedIds), { isActive });
+    setBulkResult(result);
+    selection.clear();
+    router.refresh();
+  }
+
+  async function handleBulkDelete() {
+    const result = await runBulkDelete(Array.from(selection.selectedIds));
+    setBulkResult(result);
+    setBulkDeleteConfirm(false);
+    selection.clear();
+    router.refresh();
+  }
+
+  function openContextMenu(e: React.MouseEvent, row: UnitRow, index: number) {
+    e.preventDefault();
+    if (!selection.isSelected(row.id)) selection.selectOnly(row.id, index);
+    setContextMenu({ x: e.clientX, y: e.clientY });
   }
 
   return (
@@ -108,11 +142,30 @@ export default function UnitsTable({ rows }: { rows: UnitRow[] }) {
         </button>
       </div>
 
+      {bulkResult && <BulkResultBanner result={bulkResult} onDismiss={() => setBulkResult(null)} />}
+
+      {selection.count > 0 && (
+        <div className="mx-5 mt-4 flex items-center justify-between rounded-lg border border-blue-100 bg-blue-50/60 px-4 py-2.5 text-sm text-blue-700">
+          <span>{selection.count} selected — right-click a row for bulk actions</span>
+          <button onClick={selection.clear} className="text-xs font-medium underline">
+            Clear
+          </button>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-y border-slate-200 text-xs font-medium uppercase tracking-wide text-slate-500">
-              <th className="px-5 py-3 font-medium">#</th>
+              <th className="w-10 px-5 py-3">
+                <input
+                  type="checkbox"
+                  checked={selection.allSelected}
+                  onChange={() => (selection.allSelected ? selection.clear() : selection.selectAll())}
+                  className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand"
+                />
+              </th>
+              <th className="px-3 py-3 font-medium">#</th>
               <th className="px-3 py-3 font-medium">Code</th>
               <th className="px-3 py-3 font-medium">Name</th>
               <th className="px-3 py-3 font-medium">Decimal Places</th>
@@ -123,8 +176,20 @@ export default function UnitsTable({ rows }: { rows: UnitRow[] }) {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {pageRows.map((row, i) => (
-              <tr key={row.id} className="hover:bg-slate-50/60">
-                <td className="px-5 py-3.5 text-slate-500">{(currentPage - 1) * pageSize + i + 1}</td>
+              <tr
+                key={row.id}
+                onContextMenu={(e) => openContextMenu(e, row, i)}
+                className={`hover:bg-slate-50/60 ${selection.isSelected(row.id) ? "bg-blue-50/60" : ""}`}
+              >
+                <td className="px-5 py-3.5">
+                  <input
+                    type="checkbox"
+                    checked={selection.isSelected(row.id)}
+                    onChange={(e) => selection.toggle(row.id, i, (e.nativeEvent as MouseEvent).shiftKey)}
+                    className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand"
+                  />
+                </td>
+                <td className="px-3 py-3.5 text-slate-500">{(currentPage - 1) * pageSize + i + 1}</td>
                 <td className="px-3 py-3.5 font-medium text-slate-900">{row.code}</td>
                 <td className="px-3 py-3.5 text-slate-800">{row.name}</td>
                 <td className="px-3 py-3.5 text-slate-500">{row.decimalPlaces}</td>
@@ -158,7 +223,7 @@ export default function UnitsTable({ rows }: { rows: UnitRow[] }) {
             ))}
             {pageRows.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-400">
+                <td colSpan={8} className="px-5 py-10 text-center text-sm text-slate-400">
                   No units match your filters.
                 </td>
               </tr>
@@ -223,6 +288,41 @@ export default function UnitsTable({ rows }: { rows: UnitRow[] }) {
           setDeleteTarget(null);
           setDeleteError(null);
         }}
+      />
+
+      <ConfirmDialog
+        open={bulkDeleteConfirm}
+        title={`Delete ${selection.count} unit${selection.count === 1 ? "" : "s"}?`}
+        message="Each one is deleted individually — any still used on a product will be reported as failed rather than blocking the rest. This can't be undone."
+        loading={running}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteConfirm(false)}
+      />
+
+      <RowContextMenu
+        position={contextMenu}
+        onClose={() => setContextMenu(null)}
+        actions={[
+          {
+            key: "activate",
+            label: `Activate ${selection.count > 1 ? `(${selection.count})` : ""}`,
+            icon: CheckCircle2,
+            onRun: () => handleBulkActivate(true),
+          },
+          {
+            key: "deactivate",
+            label: `Deactivate ${selection.count > 1 ? `(${selection.count})` : ""}`,
+            icon: XCircle,
+            onRun: () => handleBulkActivate(false),
+          },
+          {
+            key: "delete",
+            label: `Delete ${selection.count > 1 ? `(${selection.count})` : ""}`,
+            icon: Trash2,
+            variant: "destructive",
+            onRun: () => setBulkDeleteConfirm(true),
+          },
+        ]}
       />
     </div>
   );

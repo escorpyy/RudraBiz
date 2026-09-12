@@ -27,7 +27,7 @@ import {
 } from "@/lib/constants";
 import Combobox, { type ComboboxOption } from "@/components/shared/Combobox";
 
-type ProductSubGroupOption = { id: number; code: string; name: string };
+type ProductSubGroupOption = { id: number; code: string; name: string; isActive: boolean };
 type ProductGroupOption = { id: number; code: string; name: string; subGroups: ProductSubGroupOption[] };
 type UnitOption = { id: number; code: string; name: string; decimalPlaces: number };
 type TaxRateOption = { id: number; code: string; name: string; ratePercent: string };
@@ -210,11 +210,35 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/product-groups").then((r) => r.json()).then(setProductGroups).catch(() => setProductGroups([]));
-    fetch("/api/product-units").then((r) => r.json()).then(setUnits).catch(() => setUnits([]));
-    fetch("/api/tax-rates").then((r) => r.json()).then(setTaxRates).catch(() => setTaxRates([]));
-    fetch("/api/stock-categories").then((r) => r.json()).then(setStockCategories).catch(() => setStockCategories([]));
-    fetch("/api/locations").then((r) => r.json()).then(setLocations).catch(() => setLocations([]));
+    fetch("/api/product-groups")
+      .then((r) => r.json())
+      .then((rows) =>
+        setProductGroups(
+          rows
+            .filter((g: ProductGroupOption & { isActive: boolean }) => g.isActive)
+            .map((g: ProductGroupOption & { isActive: boolean }) => ({
+              ...g,
+              subGroups: g.subGroups.filter((sg) => sg.isActive),
+            }))
+        )
+      )
+      .catch(() => setProductGroups([]));
+    fetch("/api/product-units")
+      .then((r) => r.json())
+      .then((rows) => setUnits(rows.filter((u: UnitOption & { isActive: boolean }) => u.isActive)))
+      .catch(() => setUnits([]));
+    fetch("/api/tax-rates")
+      .then((r) => r.json())
+      .then((rows) => setTaxRates(rows.filter((t: TaxRateOption & { isActive: boolean }) => t.isActive)))
+      .catch(() => setTaxRates([]));
+    fetch("/api/stock-categories")
+      .then((r) => r.json())
+      .then((rows) => setStockCategories(rows.filter((c: StockCategoryOption & { isActive: boolean }) => c.isActive)))
+      .catch(() => setStockCategories([]));
+    fetch("/api/locations")
+      .then((r) => r.json())
+      .then((rows) => setLocations(rows.filter((l: LocationOption & { isActive: boolean }) => l.isActive)))
+      .catch(() => setLocations([]));
     fetch("/api/general-ledgers").then((r) => r.json()).then(setGeneralLedgers).catch(() => setGeneralLedgers([]));
     fetch("/api/parties").then((r) => r.json()).then(setParties).catch(() => setParties([]));
     fetch("/api/products").then((r) => r.json()).then(setProducts).catch(() => setProducts([]));

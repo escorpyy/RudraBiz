@@ -1,24 +1,29 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 /**
- * Generic multi-row selection for any table. Pass the current page's rows
- * and a way to read each row's id; the hook tracks a Set of selected ids
- * and exposes helpers for checkbox toggling, shift-click range select,
- * and select all / clear — independent of what the rows actually are.
+ * Generic multi-row selection for any table, with an explicit "selection
+ * mode": checkboxes and the floating bulk-actions bar only appear once the
+ * person right-clicks a row and chooses "Select" (see RowContextMenu).
+ * Unchecking the last selected row automatically exits selection mode
+ * again, so there's no lingering empty-selection UI state to clear by hand.
  */
 export function useRowSelection<T>(rows: T[], getId: (row: T) => number | string) {
+  const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number | string>>(new Set());
   const lastIndexRef = useRef<number | null>(null);
 
   const ids = useMemo(() => rows.map(getId), [rows, getId]);
 
+  useEffect(() => {
+    if (selectionMode && selectedIds.size === 0) setSelectionMode(false);
+  }, [selectionMode, selectedIds]);
+
   const isSelected = useCallback((id: number | string) => selectedIds.has(id), [selectedIds]);
 
   // Checkbox click: toggles one row, or with Shift held, selects the whole
-  // range between the last-clicked row and this one (standard file-manager
-  // behavior).
+  // range between the last-clicked row and this one.
   const toggle = useCallback(
     (id: number | string, index: number, shiftKey?: boolean) => {
       setSelectedIds((prev) => {
@@ -38,11 +43,17 @@ export function useRowSelection<T>(rows: T[], getId: (row: T) => number | string
     [ids]
   );
 
-  // Right-clicking a row that isn't already part of the selection selects
-  // just that row, matching how file managers behave.
-  const selectOnly = useCallback((id: number | string, index: number) => {
+  // Entry point into selection mode: right-click a row, choose "Select"
+  // from the context menu. Selects just that row to start.
+  const enterSelectionMode = useCallback((id: number | string, index: number) => {
+    setSelectionMode(true);
     setSelectedIds(new Set([id]));
     lastIndexRef.current = index;
+  }, []);
+
+  const exitSelectionMode = useCallback(() => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
   }, []);
 
   const clear = useCallback(() => setSelectedIds(new Set()), []);
@@ -51,12 +62,14 @@ export function useRowSelection<T>(rows: T[], getId: (row: T) => number | string
   const selectedRows = useMemo(() => rows.filter((r) => selectedIds.has(getId(r))), [rows, selectedIds, getId]);
 
   return {
+    selectionMode,
     selectedIds,
     selectedRows,
     count: selectedIds.size,
     isSelected,
     toggle,
-    selectOnly,
+    enterSelectionMode,
+    exitSelectionMode,
     clear,
     selectAll,
     allSelected: rows.length > 0 && selectedIds.size === rows.length,

@@ -3,12 +3,13 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, RotateCcw, Eye, Pencil, Trash2, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight, CheckCircle2, XCircle } from "lucide-react";
+import { Search, RotateCcw, Eye, Pencil, Trash2, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight, CheckCircle2, XCircle, CheckSquare, X } from "lucide-react";
 import StatusBadge from "@/components/account-groups/StatusBadge";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import { useRowSelection } from "@/components/shared/bulk-actions/useRowSelection";
 import { useBulkApi, type BulkResult } from "@/components/shared/bulk-actions/useBulkApi";
 import RowContextMenu, { type ContextMenuPosition } from "@/components/shared/bulk-actions/RowContextMenu";
+import FloatingBulkActionsBar from "@/components/shared/bulk-actions/FloatingBulkActionsBar";
 import BulkResultBanner from "@/components/shared/bulk-actions/BulkResultBanner";
 import type { RecordStatus } from "@/lib/constants";
 
@@ -52,12 +53,15 @@ export default function TaxRatesTable({ rows }: { rows: TaxRateRow[] }) {
   const startIndex = filtered.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, filtered.length);
 
-  // Bulk selection: checkbox on each row, right-click to act on the
-  // current selection. Runs against the same per-row PATCH/DELETE
+  // Bulk selection: checkboxes stay hidden until the person right-clicks a
+  // row and chooses "Select" — see useRowSelection's selectionMode. Once
+  // active, bulk actions run against the same per-row PATCH/DELETE
   // endpoints the row action buttons already use — see useBulkApi.
   const selection = useRowSelection(pageRows, (r) => r.id);
   const { runBulkPatch, runBulkDelete, running } = useBulkApi("/api/tax-rates");
   const [contextMenu, setContextMenu] = useState<ContextMenuPosition>(null);
+  const [contextMenuRow, setContextMenuRow] = useState<TaxRateRow | null>(null);
+  const [contextMenuIndex, setContextMenuIndex] = useState(0);
   const [bulkResult, setBulkResult] = useState<BulkResult | null>(null);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
 
@@ -87,7 +91,7 @@ export default function TaxRatesTable({ rows }: { rows: TaxRateRow[] }) {
   async function handleBulkActivate(isActive: boolean) {
     const result = await runBulkPatch(Array.from(selection.selectedIds), { isActive });
     setBulkResult(result);
-    selection.clear();
+    selection.exitSelectionMode();
     router.refresh();
   }
 
@@ -95,18 +99,31 @@ export default function TaxRatesTable({ rows }: { rows: TaxRateRow[] }) {
     const result = await runBulkDelete(Array.from(selection.selectedIds));
     setBulkResult(result);
     setBulkDeleteConfirm(false);
-    selection.clear();
+    selection.exitSelectionMode();
     router.refresh();
   }
 
   function openContextMenu(e: React.MouseEvent, row: TaxRateRow, index: number) {
     e.preventDefault();
-    if (!selection.isSelected(row.id)) selection.selectOnly(row.id, index);
+    setContextMenuRow(row);
+    setContextMenuIndex(index);
     setContextMenu({ x: e.clientX, y: e.clientY });
   }
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-card">
+      <FloatingBulkActionsBar
+        count={selection.count}
+        onClear={selection.exitSelectionMode}
+        actions={[
+          { key: "activate", label: "Activate", icon: CheckCircle2, onRun: () => handleBulkActivate(true) },
+          { key: "deactivate", label: "Deactivate", icon: XCircle, onRun: () => handleBulkActivate(false) },
+          { key: "delete", label: "Delete", icon: Trash2, variant: "destructive", onRun: () => setBulkDeleteConfirm(true) },
+        ]}
+      />
+
+      {bulkResult && <BulkResultBanner result={bulkResult} onDismiss={() => setBulkResult(null)} />}
+
       <div className="flex flex-wrap items-center gap-3 px-5 py-4">
         <div className="relative min-w-[220px] flex-1">
           <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -143,30 +160,21 @@ export default function TaxRatesTable({ rows }: { rows: TaxRateRow[] }) {
         </button>
       </div>
 
-      {bulkResult && <BulkResultBanner result={bulkResult} onDismiss={() => setBulkResult(null)} />}
-
-      {selection.count > 0 && (
-        <div className="mx-5 mt-4 flex items-center justify-between rounded-lg border border-blue-100 bg-blue-50/60 px-4 py-2.5 text-sm text-blue-700">
-          <span>{selection.count} selected — right-click a row for bulk actions</span>
-          <button onClick={selection.clear} className="text-xs font-medium underline">
-            Clear
-          </button>
-        </div>
-      )}
-
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-y border-slate-200 text-xs font-medium uppercase tracking-wide text-slate-500">
-              <th className="w-10 px-5 py-3">
-                <input
-                  type="checkbox"
-                  checked={selection.allSelected}
-                  onChange={() => (selection.allSelected ? selection.clear() : selection.selectAll())}
-                  className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand"
-                />
-              </th>
-              <th className="px-3 py-3 font-medium">#</th>
+              {selection.selectionMode && (
+                <th className="w-10 px-5 py-3">
+                  <input
+                    type="checkbox"
+                    checked={selection.allSelected}
+                    onChange={() => (selection.allSelected ? selection.clear() : selection.selectAll())}
+                    className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand"
+                  />
+                </th>
+              )}
+              <th className={selection.selectionMode ? "px-3 py-3 font-medium" : "px-5 py-3 font-medium"}>#</th>
               <th className="px-3 py-3 font-medium">Code</th>
               <th className="px-3 py-3 font-medium">Name</th>
               <th className="px-3 py-3 font-medium">Rate %</th>
@@ -183,15 +191,19 @@ export default function TaxRatesTable({ rows }: { rows: TaxRateRow[] }) {
                 onContextMenu={(e) => openContextMenu(e, row, i)}
                 className={`hover:bg-slate-50/60 ${selection.isSelected(row.id) ? "bg-blue-50/60" : ""}`}
               >
-                <td className="px-5 py-3.5">
-                  <input
-                    type="checkbox"
-                    checked={selection.isSelected(row.id)}
-                    onChange={(e) => selection.toggle(row.id, i, (e.nativeEvent as MouseEvent).shiftKey)}
-                    className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand"
-                  />
+                {selection.selectionMode && (
+                  <td className="px-5 py-3.5">
+                    <input
+                      type="checkbox"
+                      checked={selection.isSelected(row.id)}
+                      onChange={(e) => selection.toggle(row.id, i, (e.nativeEvent as MouseEvent).shiftKey)}
+                      className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand"
+                    />
+                  </td>
+                )}
+                <td className={selection.selectionMode ? "px-3 py-3.5 text-slate-500" : "px-5 py-3.5 text-slate-500"}>
+                  {(currentPage - 1) * pageSize + i + 1}
                 </td>
-                <td className="px-3 py-3.5 text-slate-500">{(currentPage - 1) * pageSize + i + 1}</td>
                 <td className="px-3 py-3.5 font-medium text-slate-900">{row.code}</td>
                 <td className="px-3 py-3.5 text-slate-800">{row.name}</td>
                 <td className="px-3 py-3.5 text-slate-500">{row.ratePercent}%</td>
@@ -226,7 +238,7 @@ export default function TaxRatesTable({ rows }: { rows: TaxRateRow[] }) {
             ))}
             {pageRows.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-5 py-10 text-center text-sm text-slate-400">
+                <td colSpan={selection.selectionMode ? 9 : 8} className="px-5 py-10 text-center text-sm text-slate-400">
                   No tax rates match your filters.
                 </td>
               </tr>
@@ -305,27 +317,31 @@ export default function TaxRatesTable({ rows }: { rows: TaxRateRow[] }) {
       <RowContextMenu
         position={contextMenu}
         onClose={() => setContextMenu(null)}
-        actions={[
-          {
-            key: "activate",
-            label: `Activate ${selection.count > 1 ? `(${selection.count})` : ""}`,
-            icon: CheckCircle2,
-            onRun: () => handleBulkActivate(true),
-          },
-          {
-            key: "deactivate",
-            label: `Deactivate ${selection.count > 1 ? `(${selection.count})` : ""}`,
-            icon: XCircle,
-            onRun: () => handleBulkActivate(false),
-          },
-          {
-            key: "delete",
-            label: `Delete ${selection.count > 1 ? `(${selection.count})` : ""}`,
-            icon: Trash2,
-            variant: "destructive",
-            onRun: () => setBulkDeleteConfirm(true),
-          },
-        ]}
+        actions={
+          selection.selectionMode
+            ? [
+                {
+                  key: "toggle",
+                  label: contextMenuRow && selection.isSelected(contextMenuRow.id) ? "Deselect this row" : "Select this row",
+                  icon: CheckSquare,
+                  onRun: () => contextMenuRow && selection.toggle(contextMenuRow.id, contextMenuIndex),
+                },
+                {
+                  key: "clear",
+                  label: "Clear Selection",
+                  icon: X,
+                  onRun: () => selection.exitSelectionMode(),
+                },
+              ]
+            : [
+                {
+                  key: "select",
+                  label: "Select",
+                  icon: CheckSquare,
+                  onRun: () => contextMenuRow && selection.enterSelectionMode(contextMenuRow.id, contextMenuIndex),
+                },
+              ]
+        }
       />
     </div>
   );

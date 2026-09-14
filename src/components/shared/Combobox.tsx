@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, Loader2, X, type LucideIcon } from "lucide-react";
+import { Check, ChevronDown, Loader2, Plus, X, type LucideIcon } from "lucide-react";
 import { useDebouncedValue } from "@/lib/hooks";
 
 export type ComboboxOption = {
@@ -35,6 +35,16 @@ export type ComboboxProps = {
   debounceMs?: number;
   /** Show a clear ("x") button once a value is selected. Defaults to true. */
   clearable?: boolean;
+  /**
+   * Opt-in "quick create" row. When provided, typing text that doesn't
+   * exactly match an existing option's label shows a "Create '<query>'"
+   * row at the top of the list; selecting it calls this with the typed
+   * text instead of picking an option. See CreatableCombobox for the
+   * ready-made wrapper that turns this into a full create-inline flow.
+   */
+  onCreateNew?: (query: string) => void;
+  /** Customize the create row's label. Defaults to `Create "<query>"`. */
+  createLabel?: (query: string) => string;
   id?: string;
   "aria-label"?: string;
 };
@@ -61,6 +71,8 @@ export default function Combobox({
   onQueryChange,
   debounceMs = 300,
   clearable = true,
+  onCreateNew,
+  createLabel = (query) => `Create "${query}"`,
   id,
   "aria-label": ariaLabel,
 }: ComboboxProps) {
@@ -95,6 +107,14 @@ export default function Combobox({
     );
   }, [options, query, isAsync]);
 
+  const trimmedQuery = query.trim();
+  const showCreateRow =
+    Boolean(onCreateNew) &&
+    trimmedQuery !== "" &&
+    !options.some((o) => o.label.toLowerCase() === trimmedQuery.toLowerCase());
+  const createRowIndex = filtered.length; // create row always sits after existing matches
+  const rowCount = filtered.length + (showCreateRow ? 1 : 0);
+
   // Close on outside click.
   useEffect(() => {
     function onPointerDown(e: MouseEvent) {
@@ -109,7 +129,7 @@ export default function Combobox({
 
   useEffect(() => {
     setHighlightedIndex(0);
-  }, [filtered.length, open]);
+  }, [rowCount, open]);
 
   // Keep the highlighted option scrolled into view.
   useEffect(() => {
@@ -130,6 +150,13 @@ export default function Combobox({
     inputRef.current?.blur();
   }
 
+  function triggerCreate() {
+    if (!onCreateNew) return;
+    onCreateNew(trimmedQuery);
+    setOpen(false);
+    inputRef.current?.blur();
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (disabled) return;
 
@@ -143,15 +170,19 @@ export default function Combobox({
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
-        setHighlightedIndex((i) => (filtered.length === 0 ? 0 : (i + 1) % filtered.length));
+        setHighlightedIndex((i) => (rowCount === 0 ? 0 : (i + 1) % rowCount));
         break;
       case "ArrowUp":
         e.preventDefault();
-        setHighlightedIndex((i) => (filtered.length === 0 ? 0 : (i - 1 + filtered.length) % filtered.length));
+        setHighlightedIndex((i) => (rowCount === 0 ? 0 : (i - 1 + rowCount) % rowCount));
         break;
       case "Enter":
         e.preventDefault();
-        if (filtered[highlightedIndex]) selectOption(filtered[highlightedIndex]);
+        if (showCreateRow && highlightedIndex === createRowIndex) {
+          triggerCreate();
+        } else if (filtered[highlightedIndex]) {
+          selectOption(filtered[highlightedIndex]);
+        }
         break;
       case "Escape":
         e.preventDefault();
@@ -243,7 +274,7 @@ export default function Combobox({
           {loading && filtered.length === 0 && (
             <li className="px-3.5 py-2.5 text-slate-400">Loading...</li>
           )}
-          {!loading && filtered.length === 0 && (
+          {!loading && filtered.length === 0 && !showCreateRow && (
             <li className="px-3.5 py-2.5 text-slate-400">{emptyMessage}</li>
           )}
           {filtered.map((option, i) => {
@@ -277,6 +308,25 @@ export default function Combobox({
               </li>
             );
           })}
+
+          {showCreateRow && (
+            <li
+              id={`${listboxId}-opt-${createRowIndex}`}
+              role="option"
+              aria-selected={false}
+              onMouseEnter={() => setHighlightedIndex(createRowIndex)}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                triggerCreate();
+              }}
+              className={`flex cursor-pointer items-center gap-2 border-t border-slate-100 px-3.5 py-2.5 font-medium ${
+                highlightedIndex === createRowIndex ? "bg-blue-50 text-brand" : "text-brand"
+              }`}
+            >
+              <Plus size={15} className="shrink-0" />
+              <span className="truncate">{createLabel(trimmedQuery)}</span>
+            </li>
+          )}
         </ul>
       )}
     </div>

@@ -26,6 +26,8 @@ import {
   type RecordStatus,
 } from "@/lib/constants";
 import Combobox, { type ComboboxOption } from "@/components/shared/Combobox";
+import CreatableCombobox from "@/components/shared/CreatableCombobox";
+import QuickCreateForm from "@/components/shared/QuickCreateForm";
 
 type ProductSubGroupOption = { id: number; code: string; name: string; isActive: boolean };
 type ProductGroupOption = { id: number; code: string; name: string; subGroups: ProductSubGroupOption[] };
@@ -528,7 +530,7 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
                   Product Group <span className="text-rose-500">*</span>
                 </label>
                 <p className={hintClass}>Top-level catalog group.</p>
-                <Combobox
+                <CreatableCombobox
                   options={productGroupOptions}
                   value={productGroupId}
                   onChange={handleGroupChange}
@@ -536,6 +538,32 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
                   placeholder={productGroups.length === 0 ? "No product groups available — create one first" : "Search product groups..."}
                   emptyMessage="No product groups match your search."
                   aria-label="Product Group"
+                  renderCreateForm={({ query, onCreated, onCancel }) => (
+                    <QuickCreateForm
+                      title="New Product Group"
+                      endpoint="/api/product-groups"
+                      fields={[
+                        { name: "code", label: "Code", required: true, placeholder: "PG-100" },
+                        { name: "name", label: "Name", required: true, defaultValue: query, placeholder: "Building Materials" },
+                      ]}
+                      buildOption={(row) => ({ value: String(row.id), label: `${row.code} — ${row.name}` })}
+                      onCreated={(option, row) => {
+                        // Keep the cascading Group -> Sub-Group state in
+                        // sync locally, same shape the initial GET returns.
+                        setProductGroups((prev) => [
+                          ...prev,
+                          {
+                            id: Number(row.id),
+                            code: String(row.code),
+                            name: String(row.name),
+                            subGroups: [],
+                          },
+                        ]);
+                        onCreated(option);
+                      }}
+                      onCancel={onCancel}
+                    />
+                  )}
                 />
               </div>
               <div>
@@ -594,7 +622,7 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
                   <div>
                     <label className={labelClass}>Stock Category</label>
                     <p className={hintClass}>Optional grouping for stock reports.</p>
-                    <Combobox
+                    <CreatableCombobox
                       options={stockCategoryOptions}
                       value={stockCategoryId}
                       onChange={setStockCategoryId}
@@ -602,6 +630,25 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
                       placeholder={stockCategories.length === 0 ? "No categories available" : "Search categories..."}
                       emptyMessage="No categories match your search."
                       aria-label="Stock Category"
+                      renderCreateForm={({ query, onCreated, onCancel }) => (
+                        <QuickCreateForm
+                          title="New Stock Category"
+                          endpoint="/api/stock-categories"
+                          fields={[
+                            { name: "code", label: "Code", required: true, placeholder: "CAT-01" },
+                            { name: "name", label: "Name", required: true, defaultValue: query, placeholder: "Building Materials" },
+                          ]}
+                          buildOption={(row) => ({ value: String(row.id), label: `${row.code} — ${row.name}` })}
+                          onCreated={(option, row) => {
+                            setStockCategories((prev) => [
+                              ...prev,
+                              { id: Number(row.id), code: String(row.code), name: String(row.name) },
+                            ]);
+                            onCreated(option);
+                          }}
+                          onCancel={onCancel}
+                        />
+                      )}
                     />
                   </div>
                   <div>

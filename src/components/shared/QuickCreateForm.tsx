@@ -9,10 +9,12 @@ export type QuickCreateField = {
   name: string;
   label: string;
   required?: boolean;
-  type?: "text" | "number";
+  type?: "text" | "number" | "select";
   placeholder?: string;
   /** Prefills this field, e.g. the query the person typed. */
   defaultValue?: string;
+  /** Required when type is "select". */
+  options?: { value: string; label: string }[];
 };
 
 export type QuickCreateFormProps = {
@@ -50,7 +52,9 @@ export default function QuickCreateForm({
   onCancel,
 }: QuickCreateFormProps) {
   const [values, setValues] = useState<Record<string, string>>(() =>
-    Object.fromEntries(fields.map((f) => [f.name, f.defaultValue ?? ""]))
+    Object.fromEntries(
+      fields.map((f) => [f.name, f.defaultValue ?? (f.type === "select" ? f.options?.[0]?.value ?? "" : "")])
+    )
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,14 +103,28 @@ export default function QuickCreateForm({
             <label className="text-xs font-medium text-slate-700">
               {field.label} {field.required && <span className="text-rose-500">*</span>}
             </label>
-            <input
-              type={field.type ?? "text"}
-              value={values[field.name] ?? ""}
-              onChange={(e) => setValues((prev) => ({ ...prev, [field.name]: e.target.value }))}
-              placeholder={field.placeholder}
-              autoFocus={field === fields[0]}
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
-            />
+            {field.type === "select" ? (
+              <select
+                value={values[field.name] ?? ""}
+                onChange={(e) => setValues((prev) => ({ ...prev, [field.name]: e.target.value }))}
+                className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+              >
+                {field.options?.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type={field.type ?? "text"}
+                value={values[field.name] ?? ""}
+                onChange={(e) => setValues((prev) => ({ ...prev, [field.name]: e.target.value }))}
+                placeholder={field.placeholder}
+                autoFocus={field === fields[0]}
+                className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+              />
+            )}
           </div>
         ))}
       </div>

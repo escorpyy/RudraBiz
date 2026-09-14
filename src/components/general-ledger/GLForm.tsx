@@ -4,10 +4,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Layers, Network, Save } from "lucide-react";
 import Combobox, { type ComboboxOption } from "@/components/shared/Combobox";
+import CreatableCombobox from "@/components/shared/CreatableCombobox";
+import QuickCreateForm from "@/components/shared/QuickCreateForm";
 import {
   GL_TYPE_LIST,
   GL_TYPES,
   ACCOUNT_TYPES,
+  ACCOUNT_TYPE_LIST,
   type GLType,
   type AccountType,
 } from "@/lib/constants";
@@ -239,7 +242,7 @@ export default function GLForm({ initial }: { initial?: GLFormInitial }) {
             Account Group <span className="text-rose-500">*</span>
           </label>
           <p className="mb-2 text-xs text-slate-500">Select the account group this ledger belongs to.</p>
-          <Combobox
+          <CreatableCombobox
             options={accountGroupOptions}
             value={accountGroupId}
             onChange={handleGroupChange}
@@ -247,6 +250,45 @@ export default function GLForm({ initial }: { initial?: GLFormInitial }) {
             placeholder={accountGroups.length === 0 ? "No account groups available — create one first" : "Search account groups..."}
             emptyMessage="No account groups match your search."
             aria-label="Account Group"
+            renderCreateForm={({ query, onCreated, onCancel }) => (
+              <QuickCreateForm
+                title="New Account Group"
+                endpoint="/api/account-groups"
+                fields={[
+                  { name: "code", label: "Code", required: true, placeholder: "1000" },
+                  { name: "description", label: "Name", required: true, defaultValue: query, placeholder: "Current Assets" },
+                  {
+                    name: "type",
+                    label: "Account Type",
+                    required: true,
+                    type: "select",
+                    options: ACCOUNT_TYPE_LIST.map((t) => ({ value: t, label: ACCOUNT_TYPES[t].label })),
+                  },
+                ]}
+                buildOption={(row) => ({
+                  value: String(row.id),
+                  label: `${row.code} — ${row.description}`,
+                  description: ACCOUNT_TYPES[row.type as AccountType].label,
+                })}
+                onCreated={(option, row) => {
+                  // Keep the cascading Group -> Sub-Group state in sync
+                  // locally, same shape the initial GET returns.
+                  setAccountGroups((prev) => [
+                    ...prev,
+                    {
+                      id: Number(row.id),
+                      code: String(row.code),
+                      description: String(row.description),
+                      type: row.type as AccountType,
+                      isActive: true,
+                      subGroups: [],
+                    },
+                  ]);
+                  onCreated(option);
+                }}
+                onCancel={onCancel}
+              />
+            )}
           />
         </div>
 

@@ -44,6 +44,11 @@ enum DocumentType {
   PURCHASE_BILL
 }
 
+enum CalendarPreference {
+  BS
+  AD
+}
+
 enum InstrumentType {
   CHEQUE
   RTGS
@@ -121,6 +126,12 @@ model GeneralLedger {
 
   journalVoucherLines  JournalVoucherLine[]
   cashBankVoucherLines CashBankVoucherLine[]
+
+  // Set on Company when this ledger is designated as the year-end
+  // P&L closing target (see Company.retainedEarningsGLId).
+  retainedEarningsFor Company?
+
+  openingBalances OpeningBalance[]
 
   subLedgers        SubLedger[]
 
@@ -270,6 +281,8 @@ model SubLedger {
   isActive        Boolean        @default(true)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+
+  openingBalances OpeningBalance[]
 
   @@index([generalLedgerId])
   @@index([partyId])
@@ -426,6 +439,78 @@ model CashBankVoucherLine {
 // USER (minimal — referenced by AuditLog)
 // ============================================================
 
+// ============================================================
+// COMPANY / SETUP  (single-row profile — enforced as a singleton
+// via a `CHECK (id = 1)` constraint added in the migration, since
+// Prisma has no native singleton-table concept)
+// ============================================================
+
+model Company {
+  id           Int     @id @default(autoincrement())
+  name         String  @db.VarChar(200)
+  panOrVatNo   String? @db.VarChar(25)
+  address      String? @db.VarChar(300)
+  phone        String? @db.VarChar(20)
+  email        String? @db.VarChar(255)
+  logoUrl      String? @db.VarChar(500)
+  baseCurrency String  @default("NPR") @db.VarChar(3)
+
+  // Net Revenue/Expense movement for a closed fiscal year gets posted
+  // here as part of the year-end roll-forward — see the Opening
+  // Balance design discussion. Nullable because a brand-new company
+  // (first year, nothing to close yet) doesn't need this set
+  // immediately, but it must be set before any roll-forward can run.
+  retainedEarningsGLId Int?            @unique
+  retainedEarningsGL   GeneralLedger?  @relation(fields: [retainedEarningsGLId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================================
+// FISCAL YEAR
+// ============================================================
+
+model FiscalYear {
+  id    Int    @id @default(autoincrement())
+  code  String @unique @db.VarChar(15) // "2082/083" — display label, not itself convertible
+
+  // AD is the only source of truth throughout the app — see
+  // src/lib/nepaliDate.ts. BS is derived at the edges (forms/reports)
+  // for display only and is never stored.
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+
+  // Enforced as "only one row may be true" via a partial unique index
+  // added in the migration (`WHERE isCurrent = true`) — Prisma can't
+  // express this constraint natively.
+  isCurrent Boolean @default(false)
+
+  isClosed  Boolean   @default(false)
+  closedAt  DateTime?
+  closedBy  Int?
+  closedByUser User?  @relation("FYClosedBy", fields: [closedBy], references: [id], onDelete: SetNull)
+
+  // Single flag locking every OpeningBalance/StockOpeningBalance row for
+  // this year at once — see fn_block_locked_ob_edit. Deliberately not a
+  // per-row status column: flipping one flag here is simpler and safer
+  // than updating a potentially large number of rows to a "LOCKED" state.
+  isOpeningBalanceLocked     Boolean   @default(false)
+  openingBalanceLockedAt     DateTime?
+  openingBalanceLockedBy     Int?
+  openingBalanceLockedByUser User?     @relation("FYOBLockedBy", fields: [openingBalanceLockedBy], references: [id], onDelete: SetNull)
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  openingBalances      OpeningBalance[]
+  stockOpeningBalances StockOpeningBalance[]
+
+  @@index([isCurrent])
+  @@index([isClosed])
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   name      String   @db.VarChar(100)
@@ -433,12 +518,105 @@ model User {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 
+  // Drives which side of NepaliDatePicker is the free-typed input vs
+  // the read-only caption. Defaults to BS since most users are
+  // expected to prefer it; individually switchable to AD. Never
+  // affects what's stored — every date column in the schema stays AD
+  // regardless of this setting.
+  calendarPreference CalendarPreference @default(BS)
+
   auditLogs             AuditLog[]
   journalVouchersPosted  JournalVoucher[]      @relation("JVPostedBy")
   journalVouchersCreated JournalVoucher[]      @relation("JVCreatedBy")
   cashBankVouchersPosted  CashBankVoucher[]     @relation("CBPostedBy")
   cashBankVouchersCreated CashBankVoucher[]     @relation("CBCreatedBy")
   cashBankLinesCleared    CashBankVoucherLine[] @relation("CBLineClearedBy")
+  fiscalYearsClosed       FiscalYear[]          @relation("FYClosedBy")
+  fiscalYearsOBLocked     FiscalYear[]          @relation("FYOBLockedBy")
+  openingBalancesCreated  OpeningBalance[]      @relation("OBCreatedBy")
+}
+
+// ============================================================
+// OPENING BALANCE
+// ============================================================
+
+model OpeningBalance {
+  id           Int        @id @default(autoincrement())
+  fiscalYearId Int
+  fiscalYear   FiscalYear @relation(fields: [fiscalYearId], references: [id], onDelete: Restrict)
+
+  generalLedgerId Int
+  generalLedger   GeneralLedger @relation(fields: [generalLedgerId], references: [id], onDelete: Restrict)
+
+  // Narrow dimensional tag (e.g. scheme/project-wise breakdown under one
+  // shared GL) — NOT used for party-wise AR/AP detail. Every Party
+  // already has its own dedicated leaf GeneralLedger
+  // (Party.generalLedgerId), so a customer/vendor opening balance is
+  // just a plain row against that ledger, like any other leaf account.
+  subLedgerId Int?
+  subLedger   SubLedger? @relation(fields: [subLedgerId], references: [id], onDelete: Restrict)
+
+  debit   Decimal @default(0) @db.Decimal(18, 6)
+  credit  Decimal @default(0) @db.Decimal(18, 6)
+  remarks String? @db.VarChar(500)
+
+  // Traces a row auto-generated by year-end roll-forward back to the
+  // prior year's closing balance it came from — distinguishes system-
+  // computed carry-forward from manually typed/imported entries.
+  carriedForwardFromId Int?
+  carriedForwardFrom   OpeningBalance?  @relation("OBCarryForward", fields: [carriedForwardFromId], references: [id], onDelete: SetNull)
+  carriedForwardTo     OpeningBalance[] @relation("OBCarryForward")
+
+  createdBy     Int?
+  createdByUser User?    @relation("OBCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Real uniqueness (one row per GL per year, and separately one row
+  // per GL+subLedger combination) is enforced via two partial unique
+  // indexes in the migration, not here — Prisma's declarative @@unique
+  // would treat every NULL subLedgerId as distinct and let duplicate
+  // non-subledger rows through, the same gap FiscalYear.isCurrent had.
+  @@index([fiscalYearId, generalLedgerId, subLedgerId])
+  @@index([generalLedgerId])
+  @@index([subLedgerId])
+}
+
+// ============================================================
+// STOCK OPENING BALANCE
+// ============================================================
+
+model StockOpeningBalance {
+  id           Int        @id @default(autoincrement())
+  fiscalYearId Int
+  fiscalYear   FiscalYear @relation(fields: [fiscalYearId], references: [id], onDelete: Restrict)
+
+  stockDetailId Int
+  stockDetail   StockDetail @relation(fields: [stockDetailId], references: [id], onDelete: Restrict)
+
+  locationId Int?
+  location   Location? @relation("StockOpeningBalanceLocation", fields: [locationId], references: [id], onDelete: SetNull)
+
+  batchNo    String?   @db.VarChar(50)
+  expiryDate DateTime? @db.Date
+
+  quantity Decimal @db.Decimal(18, 6)
+  rate     Decimal @db.Decimal(18, 6)
+  value    Decimal @db.Decimal(18, 6) // quantity * rate — stored explicitly, not generated, so a transcription error is visible rather than silently masked
+
+  carriedForwardFromId Int?
+  carriedForwardFrom   StockOpeningBalance?  @relation("SOBCarryForward", fields: [carriedForwardFromId], references: [id], onDelete: SetNull)
+  carriedForwardTo     StockOpeningBalance[] @relation("SOBCarryForward")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Real uniqueness enforced via a COALESCE-based expression unique
+  // index in the migration (locationId/batchNo are both nullable, so a
+  // plain composite unique here would have the same NULL-handling gap
+  // noted on OpeningBalance above).
+  @@index([fiscalYearId, stockDetailId])
+  @@index([stockDetailId])
 }
 
 // ============================================================
@@ -593,6 +771,7 @@ model Location {
 
   stockDetails      StockDetail[]      @relation("StockDefaultLocation")
   fixedAssetDetails FixedAssetDetail[] @relation("FixedAssetLocation")
+  stockOpeningBalances StockOpeningBalance[] @relation("StockOpeningBalanceLocation")
 
   @@index([parentId])
 }
@@ -685,6 +864,7 @@ model StockDetail {
   defaultVendor   Party? @relation("StockDefaultVendor", fields: [defaultVendorId], references: [id], onDelete: SetNull)
 
   alternateUnits AlternateUnit[]
+  openingBalances StockOpeningBalance[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

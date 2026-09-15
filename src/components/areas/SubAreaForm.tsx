@@ -3,7 +3,9 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ChevronDown, MapPinned, Save } from "lucide-react";
-import Combobox, { type ComboboxOption } from "@/components/shared/Combobox";
+import type { ComboboxOption } from "@/components/shared/Combobox";
+import CreatableCombobox from "@/components/shared/CreatableCombobox";
+import QuickCreateForm from "@/components/shared/QuickCreateForm";
 import type { RecordStatus } from "@/lib/constants";
 
 type AreaOption = { id: number; code: string; name: string; isActive: boolean };
@@ -106,7 +108,7 @@ export default function SubAreaForm({ initial }: { initial?: SubAreaFormInitial 
             Area <span className="text-rose-500">*</span>
           </label>
           <p className="mb-2 text-xs text-slate-500">Select the area this sub-area belongs to.</p>
-          <Combobox
+          <CreatableCombobox
             options={areaOptions}
             value={areaId}
             onChange={setAreaId}
@@ -114,6 +116,26 @@ export default function SubAreaForm({ initial }: { initial?: SubAreaFormInitial 
             placeholder={areas.length === 0 ? "No areas available — create one first" : "Search areas..."}
             emptyMessage="No areas match your search."
             aria-label="Area"
+            renderCreateForm={({ query, onCreated, onCancel }) => (
+              <QuickCreateForm
+                title="New Area"
+                endpoint="/api/areas"
+                fields={[
+                  { name: "code", label: "Code", required: true, placeholder: "A-001" },
+                  { name: "name", label: "Name", required: true, defaultValue: query, placeholder: "Baneshwor" },
+                  { name: "shortName", label: "Short Name", required: true, placeholder: "BNW" },
+                ]}
+                buildOption={(row) => ({ value: String(row.id), label: String(row.name), description: String(row.code) })}
+                onCreated={(option, row) => {
+                  setAreas((prev) => [
+                    ...prev,
+                    { id: Number(row.id), code: String(row.code), name: String(row.name), isActive: true },
+                  ]);
+                  onCreated(option);
+                }}
+                onCancel={onCancel}
+              />
+            )}
           />
         </div>
 

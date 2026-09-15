@@ -300,7 +300,7 @@ export default function GLForm({ initial }: { initial?: GLFormInitial }) {
           <p className="mb-2 text-xs text-slate-500">
             {accountGroupId ? "Select the sub-group this ledger belongs to." : "Select an Account Group first."}
           </p>
-          <Combobox
+          <CreatableCombobox
             options={subGroupOptions}
             value={accountSubGroupId}
             onChange={setAccountSubGroupId}
@@ -315,6 +315,35 @@ export default function GLForm({ initial }: { initial?: GLFormInitial }) {
             }
             emptyMessage="No sub-groups match your search."
             aria-label="Account Sub-Group"
+            renderCreateForm={({ query, onCreated, onCancel }) => (
+              <QuickCreateForm
+                title="New Account Sub-Group"
+                endpoint="/api/account-sub-groups"
+                fields={[
+                  { name: "code", label: "Code", required: true, placeholder: "1010" },
+                  { name: "description", label: "Name", required: true, defaultValue: query, placeholder: "Cash & Bank" },
+                ]}
+                extraPayload={{ accountGroupId: Number(accountGroupId) }}
+                buildOption={(row) => ({ value: String(row.id), label: `${row.code} — ${row.description}` })}
+                onCreated={(option, row) => {
+                  setAccountGroups((prev) =>
+                    prev.map((g) =>
+                      g.id === Number(accountGroupId)
+                        ? {
+                            ...g,
+                            subGroups: [
+                              ...g.subGroups,
+                              { id: Number(row.id), code: String(row.code), description: String(row.description), isActive: true },
+                            ],
+                          }
+                        : g
+                    )
+                  );
+                  onCreated(option);
+                }}
+                onCancel={onCancel}
+              />
+            )}
           />
         </div>
 

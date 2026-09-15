@@ -3,8 +3,10 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Network, Layers, MapPinned, UserRound, Save, MapPin, ShieldCheck } from "lucide-react";
-import { ACCOUNT_TYPES, type AccountType, type RecordStatus } from "@/lib/constants";
-import Combobox, { type ComboboxOption } from "@/components/shared/Combobox";
+import { ACCOUNT_TYPES, ACCOUNT_TYPE_LIST, type AccountType, type RecordStatus } from "@/lib/constants";
+import type { ComboboxOption } from "@/components/shared/Combobox";
+import CreatableCombobox from "@/components/shared/CreatableCombobox";
+import QuickCreateForm from "@/components/shared/QuickCreateForm";
 
 type SubGroupOption = { id: number; code: string; description: string; isActive: boolean };
 type AccountGroupOption = {
@@ -16,6 +18,7 @@ type AccountGroupOption = {
   subGroups: SubGroupOption[];
 };
 type SubAreaOption = { id: number; code: string; name: string; areaName: string };
+type AreaOption = { id: number; code: string; name: string; isActive: boolean };
 type AgentOption = { id: number; code: string; name: string };
 
 // GLType restricted to the three values that make sense for a Party.
@@ -53,6 +56,7 @@ export default function PartyForm({ initial }: { initial?: PartyFormInitial }) {
 
   const [accountGroups, setAccountGroups] = useState<AccountGroupOption[]>([]);
   const [subAreas, setSubAreas] = useState<SubAreaOption[]>([]);
+  const [areas, setAreas] = useState<AreaOption[]>([]);
   const [agents, setAgents] = useState<AgentOption[]>([]);
 
   const [code, setCode] = useState(initial?.code ?? "");
@@ -97,6 +101,10 @@ export default function PartyForm({ initial }: { initial?: PartyFormInitial }) {
       .then((r) => r.json())
       .then((rows: SubAreaOption[]) => setSubAreas(rows))
       .catch(() => setSubAreas([]));
+    fetch("/api/areas")
+      .then((r) => r.json())
+      .then((rows: AreaOption[]) => setAreas(rows.filter((a) => a.isActive)))
+      .catch(() => setAreas([]));
     fetch("/api/agents")
       .then((r) => r.json())
       .then((rows: AgentOption[]) => setAgents(rows))
@@ -258,7 +266,7 @@ export default function PartyForm({ initial }: { initial?: PartyFormInitial }) {
                 Account Group <span className="text-rose-500">*</span>
               </label>
               <p className={hintClass}>Select the account group this party's ledger belongs to.</p>
-              <Combobox
+              <CreatableCombobox
                 options={accountGroupOptions}
                 value={accountGroupId}
                 onChange={handleGroupChange}
@@ -266,6 +274,43 @@ export default function PartyForm({ initial }: { initial?: PartyFormInitial }) {
                 placeholder={accountGroups.length === 0 ? "No account groups available — create one first" : "Search account groups..."}
                 emptyMessage="No account groups match your search."
                 aria-label="Account Group"
+                renderCreateForm={({ query, onCreated, onCancel }) => (
+                  <QuickCreateForm
+                    title="New Account Group"
+                    endpoint="/api/account-groups"
+                    fields={[
+                      { name: "code", label: "Code", required: true, placeholder: "1000" },
+                      { name: "description", label: "Name", required: true, defaultValue: query, placeholder: "Current Assets" },
+                      {
+                        name: "type",
+                        label: "Account Type",
+                        required: true,
+                        type: "select",
+                        options: ACCOUNT_TYPE_LIST.map((t) => ({ value: t, label: ACCOUNT_TYPES[t].label })),
+                      },
+                    ]}
+                    buildOption={(row) => ({
+                      value: String(row.id),
+                      label: `${row.code} — ${row.description}`,
+                      description: ACCOUNT_TYPES[row.type as AccountType].label,
+                    })}
+                    onCreated={(option, row) => {
+                      setAccountGroups((prev) => [
+                        ...prev,
+                        {
+                          id: Number(row.id),
+                          code: String(row.code),
+                          description: String(row.description),
+                          type: row.type as AccountType,
+                          isActive: true,
+                          subGroups: [],
+                        },
+                      ]);
+                      onCreated(option);
+                    }}
+                    onCancel={onCancel}
+                  />
+                )}
               />
             </div>
 
@@ -276,7 +321,7 @@ export default function PartyForm({ initial }: { initial?: PartyFormInitial }) {
               <p className={hintClass}>
                 {accountGroupId ? "Usually Accounts Receivable (customer) or Accounts Payable (vendor)." : "Select an Account Group first."}
               </p>
-              <Combobox
+              <CreatableCombobox
                 options={subGroupOptions}
                 value={accountSubGroupId}
                 onChange={setAccountSubGroupId}
@@ -291,6 +336,35 @@ export default function PartyForm({ initial }: { initial?: PartyFormInitial }) {
                 }
                 emptyMessage="No sub-groups match your search."
                 aria-label="Account Sub-Group"
+                renderCreateForm={({ query, onCreated, onCancel }) => (
+                  <QuickCreateForm
+                    title="New Account Sub-Group"
+                    endpoint="/api/account-sub-groups"
+                    fields={[
+                      { name: "code", label: "Code", required: true, placeholder: "1010" },
+                      { name: "description", label: "Name", required: true, defaultValue: query, placeholder: "Accounts Receivable" },
+                    ]}
+                    extraPayload={{ accountGroupId: Number(accountGroupId) }}
+                    buildOption={(row) => ({ value: String(row.id), label: `${row.code} — ${row.description}` })}
+                    onCreated={(option, row) => {
+                      setAccountGroups((prev) =>
+                        prev.map((g) =>
+                          g.id === Number(accountGroupId)
+                            ? {
+                                ...g,
+                                subGroups: [
+                                  ...g.subGroups,
+                                  { id: Number(row.id), code: String(row.code), description: String(row.description), isActive: true },
+                                ],
+                              }
+                            : g
+                        )
+                      );
+                      onCreated(option);
+                    }}
+                    onCancel={onCancel}
+                  />
+                )}
               />
             </div>
           </div>
@@ -383,7 +457,7 @@ export default function PartyForm({ initial }: { initial?: PartyFormInitial }) {
             <div>
               <label className={labelClass}>Sub-Area</label>
               <p className={hintClass}>Optional — region this party is based in.</p>
-              <Combobox
+              <CreatableCombobox
                 options={subAreaOptions}
                 value={subAreaId}
                 onChange={setSubAreaId}
@@ -391,12 +465,43 @@ export default function PartyForm({ initial }: { initial?: PartyFormInitial }) {
                 placeholder={subAreas.length === 0 ? "No sub-areas available" : "Search sub-areas..."}
                 emptyMessage="No sub-areas match your search."
                 aria-label="Sub-Area"
+                renderCreateForm={({ query, onCreated, onCancel }) =>
+                  areas.length === 0 ? (
+                    <p className="text-sm text-slate-500">
+                      No areas exist yet — create an Area first from Area Master, then come back to add a sub-area.
+                    </p>
+                  ) : (
+                    <QuickCreateForm
+                      title="New Sub-Area"
+                      endpoint="/api/sub-areas"
+                      fields={[
+                        { name: "areaId", label: "Area", required: true, type: "select", options: areas.map((a) => ({ value: String(a.id), label: a.name })) },
+                        { name: "code", label: "Code", required: true, placeholder: "A-001-1" },
+                        { name: "name", label: "Name", required: true, defaultValue: query, placeholder: "New Baneshwor" },
+                        { name: "shortName", label: "Short Name", required: true, placeholder: "NBW" },
+                      ]}
+                      buildOption={(row) => {
+                        const area = areas.find((a) => a.id === Number(row.areaId));
+                        return { value: String(row.id), label: String(row.name), description: area?.name };
+                      }}
+                      onCreated={(option, row) => {
+                        const area = areas.find((a) => a.id === Number(row.areaId));
+                        setSubAreas((prev) => [
+                          ...prev,
+                          { id: Number(row.id), code: String(row.code), name: String(row.name), areaName: area?.name ?? "" },
+                        ]);
+                        onCreated(option);
+                      }}
+                      onCancel={onCancel}
+                    />
+                  )
+                }
               />
             </div>
             <div>
               <label className={labelClass}>Agent</label>
               <p className={hintClass}>Optional — sales/purchase agent linked to this party.</p>
-              <Combobox
+              <CreatableCombobox
                 options={agentOptions}
                 value={agentId}
                 onChange={setAgentId}
@@ -404,6 +509,23 @@ export default function PartyForm({ initial }: { initial?: PartyFormInitial }) {
                 placeholder={agents.length === 0 ? "No agents available" : "Search agents..."}
                 emptyMessage="No agents match your search."
                 aria-label="Agent"
+                renderCreateForm={({ query, onCreated, onCancel }) => (
+                  <QuickCreateForm
+                    title="New Agent"
+                    endpoint="/api/agents"
+                    fields={[
+                      { name: "code", label: "Code", required: true, placeholder: "AGT-01" },
+                      { name: "name", label: "Name", required: true, defaultValue: query, placeholder: "Ram Sharma" },
+                      { name: "phone", label: "Phone", placeholder: "98XXXXXXXX" },
+                    ]}
+                    buildOption={(row) => ({ value: String(row.id), label: String(row.name), description: String(row.code) })}
+                    onCreated={(option, row) => {
+                      setAgents((prev) => [...prev, { id: Number(row.id), code: String(row.code), name: String(row.name) }]);
+                      onCreated(option);
+                    }}
+                    onCancel={onCancel}
+                  />
+                )}
               />
             </div>
           </div>

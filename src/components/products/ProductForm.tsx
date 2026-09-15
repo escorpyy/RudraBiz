@@ -26,7 +26,7 @@ import {
   type RecordStatus,
 } from "@/lib/constants";
 import Combobox, { type ComboboxOption } from "@/components/shared/Combobox";
-import CreatableCombobox from "@/components/shared/CreatableCombobox";
+import CreatableCombobox, { type CreateFormRenderProps } from "@/components/shared/CreatableCombobox";
 import QuickCreateForm from "@/components/shared/QuickCreateForm";
 
 type ProductSubGroupOption = { id: number; code: string; name: string; isActive: boolean };
@@ -322,6 +322,78 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
     setComponents((rows) => rows.filter((_, i) => i !== index));
   }
 
+  // Shared quick-create bodies for pickers that repeat across sections
+  // (Unit shows up for Base/Alternate/Non-Stock/Service; Tax Rate for
+  // Stock/Non-Stock/Service; Location for Stock default + Fixed Asset).
+  function renderUnitCreateForm({ query, onCreated, onCancel }: CreateFormRenderProps) {
+    return (
+      <QuickCreateForm
+        title="New Unit"
+        endpoint="/api/product-units"
+        fields={[
+          { name: "code", label: "Code", required: true, placeholder: "PCS" },
+          { name: "name", label: "Name", required: true, defaultValue: query, placeholder: "Pieces" },
+          { name: "decimalPlaces", label: "Decimal Places", type: "number", defaultValue: "0" },
+        ]}
+        buildOption={(row) => ({ value: String(row.id), label: `${row.code} — ${row.name}` })}
+        onCreated={(option, row) => {
+          setUnits((prev) => [
+            ...prev,
+            { id: Number(row.id), code: String(row.code), name: String(row.name), decimalPlaces: Number(row.decimalPlaces) },
+          ]);
+          onCreated(option);
+        }}
+        onCancel={onCancel}
+      />
+    );
+  }
+
+  function renderTaxRateCreateForm({ query, onCreated, onCancel }: CreateFormRenderProps) {
+    return (
+      <QuickCreateForm
+        title="New Tax Rate"
+        endpoint="/api/tax-rates"
+        fields={[
+          { name: "code", label: "Code", required: true, placeholder: "GST13" },
+          { name: "name", label: "Name", required: true, defaultValue: query, placeholder: "GST 13%" },
+          { name: "ratePercent", label: "Rate %", type: "number", required: true, placeholder: "13" },
+          { name: "hsnSacCode", label: "HSN / SAC Code", placeholder: "8523" },
+        ]}
+        buildOption={(row) => ({ value: String(row.id), label: `${row.name} (${row.ratePercent}%)`, description: String(row.code) })}
+        onCreated={(option, row) => {
+          setTaxRates((prev) => [
+            ...prev,
+            { id: Number(row.id), code: String(row.code), name: String(row.name), ratePercent: String(row.ratePercent) },
+          ]);
+          onCreated(option);
+        }}
+        onCancel={onCancel}
+      />
+    );
+  }
+
+  function renderLocationCreateForm({ query, onCreated, onCancel }: CreateFormRenderProps) {
+    return (
+      <QuickCreateForm
+        title="New Location"
+        endpoint="/api/locations"
+        fields={[
+          { name: "code", label: "Code", required: true, placeholder: "WH-01" },
+          { name: "name", label: "Name", required: true, defaultValue: query, placeholder: "Main Warehouse" },
+        ]}
+        buildOption={(row) => ({ value: String(row.id), label: String(row.name), description: String(row.code) })}
+        onCreated={(option, row) => {
+          setLocations((prev) => [
+            ...prev,
+            { id: Number(row.id), code: String(row.code), name: String(row.name), parentName: null },
+          ]);
+          onCreated(option);
+        }}
+        onCancel={onCancel}
+      />
+    );
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -571,7 +643,7 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
                   Product Sub-Group <span className="text-rose-500">*</span>
                 </label>
                 <p className={hintClass}>{productGroupId ? "Sub-category within the group." : "Select a Product Group first."}</p>
-                <Combobox
+                <CreatableCombobox
                   options={subGroupOptions}
                   value={productSubGroupId}
                   onChange={setProductSubGroupId}
@@ -586,6 +658,35 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
                   }
                   emptyMessage="No sub-groups match your search."
                   aria-label="Product Sub-Group"
+                  renderCreateForm={({ query, onCreated, onCancel }) => (
+                    <QuickCreateForm
+                      title="New Product Sub-Group"
+                      endpoint="/api/product-sub-groups"
+                      fields={[
+                        { name: "code", label: "Code", required: true, placeholder: "PSG-01" },
+                        { name: "name", label: "Name", required: true, defaultValue: query, placeholder: "Cement & Concrete" },
+                      ]}
+                      extraPayload={{ productGroupId: Number(productGroupId) }}
+                      buildOption={(row) => ({ value: String(row.id), label: `${row.code} — ${row.name}` })}
+                      onCreated={(option, row) => {
+                        setProductGroups((prev) =>
+                          prev.map((g) =>
+                            g.id === Number(productGroupId)
+                              ? {
+                                  ...g,
+                                  subGroups: [
+                                    ...g.subGroups,
+                                    { id: Number(row.id), code: String(row.code), name: String(row.name), isActive: true },
+                                  ],
+                                }
+                              : g
+                          )
+                        );
+                        onCreated(option);
+                      }}
+                      onCancel={onCancel}
+                    />
+                  )}
                 />
               </div>
             </div>
@@ -609,7 +710,7 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
                       Base Unit <span className="text-rose-500">*</span>
                     </label>
                     <p className={hintClass}>Unit stock quantities are recorded in.</p>
-                    <Combobox
+                    <CreatableCombobox
                       options={unitOptions}
                       value={baseUnitId}
                       onChange={setBaseUnitId}
@@ -617,6 +718,7 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
                       placeholder={units.length === 0 ? "No units available — create one first" : "Search units..."}
                       emptyMessage="No units match your search."
                       aria-label="Base Unit"
+                      renderCreateForm={renderUnitCreateForm}
                     />
                   </div>
                   <div>
@@ -654,7 +756,7 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
                   <div>
                     <label className={labelClass}>Default Location</label>
                     <p className={hintClass}>Optional default warehouse/location.</p>
-                    <Combobox
+                    <CreatableCombobox
                       options={locationOptions}
                       value={defaultLocationId}
                       onChange={setDefaultLocationId}
@@ -662,6 +764,7 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
                       placeholder={locations.length === 0 ? "No locations available" : "Search locations..."}
                       emptyMessage="No locations match your search."
                       aria-label="Default Location"
+                      renderCreateForm={renderLocationCreateForm}
                     />
                   </div>
                 </div>
@@ -669,7 +772,7 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <div>
                     <label className={labelClass}>Tax Rate</label>
-                    <Combobox
+                    <CreatableCombobox
                       options={taxRateOptions}
                       value={stockTaxRateId}
                       onChange={setStockTaxRateId}
@@ -677,6 +780,7 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
                       placeholder={taxRates.length === 0 ? "No tax rates available" : "Search tax rates..."}
                       emptyMessage="No tax rates match your search."
                       aria-label="Tax Rate"
+                      renderCreateForm={renderTaxRateCreateForm}
                     />
                   </div>
                   <div>
@@ -818,13 +922,14 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
                 {alternateUnits.map((row, i) => (
                   <div key={i} className="flex items-center gap-3 rounded-lg border border-slate-200 p-3">
                     <div className="flex-1">
-                      <Combobox
+                      <CreatableCombobox
                         options={unitOptions.filter((o) => o.value !== baseUnitId)}
                         value={row.unitId}
                         onChange={(v) => updateAlternateUnit(i, { unitId: v })}
                         placeholder="Select unit..."
                         emptyMessage="No units match your search."
                         aria-label={`Alternate unit ${i + 1}`}
+                        renderCreateForm={renderUnitCreateForm}
                       />
                     </div>
                     <input
@@ -857,11 +962,11 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
                   <label className={labelClass}>
                     Unit <span className="text-rose-500">*</span>
                   </label>
-                  <Combobox options={unitOptions} value={unitId} onChange={setUnitId} icon={Ruler} placeholder="Search units..." emptyMessage="No units match your search." aria-label="Unit" />
+                  <CreatableCombobox options={unitOptions} value={unitId} onChange={setUnitId} icon={Ruler} placeholder="Search units..." emptyMessage="No units match your search." aria-label="Unit" renderCreateForm={renderUnitCreateForm} />
                 </div>
                 <div>
                   <label className={labelClass}>Tax Rate</label>
-                  <Combobox options={taxRateOptions} value={stockTaxRateId} onChange={setStockTaxRateId} icon={Tags} placeholder="Search tax rates..." emptyMessage="No tax rates match your search." aria-label="Tax Rate" />
+                  <CreatableCombobox options={taxRateOptions} value={stockTaxRateId} onChange={setStockTaxRateId} icon={Tags} placeholder="Search tax rates..." emptyMessage="No tax rates match your search." aria-label="Tax Rate" renderCreateForm={renderTaxRateCreateForm} />
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -891,11 +996,11 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
                 <div>
                   <label className={labelClass}>Unit</label>
                   <p className={hintClass}>Optional — e.g. per hour, per visit. Leave blank for lump-sum services.</p>
-                  <Combobox options={unitOptions} value={svUnitId} onChange={setSvUnitId} icon={Ruler} placeholder="Search units..." emptyMessage="No units match your search." aria-label="Unit" />
+                  <CreatableCombobox options={unitOptions} value={svUnitId} onChange={setSvUnitId} icon={Ruler} placeholder="Search units..." emptyMessage="No units match your search." aria-label="Unit" renderCreateForm={renderUnitCreateForm} />
                 </div>
                 <div>
                   <label className={labelClass}>Tax Rate</label>
-                  <Combobox options={taxRateOptions} value={stockTaxRateId} onChange={setStockTaxRateId} icon={Tags} placeholder="Search tax rates..." emptyMessage="No tax rates match your search." aria-label="Tax Rate" />
+                  <CreatableCombobox options={taxRateOptions} value={stockTaxRateId} onChange={setStockTaxRateId} icon={Tags} placeholder="Search tax rates..." emptyMessage="No tax rates match your search." aria-label="Tax Rate" renderCreateForm={renderTaxRateCreateForm} />
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -945,7 +1050,7 @@ export default function ProductForm({ initial }: { initial?: ProductFormInitial 
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <div>
                   <label className={labelClass}>Location</label>
-                  <Combobox options={locationOptions} value={locationId} onChange={setLocationId} icon={MapPinned} placeholder="Search locations..." emptyMessage="No locations match your search." aria-label="Location" />
+                  <CreatableCombobox options={locationOptions} value={locationId} onChange={setLocationId} icon={MapPinned} placeholder="Search locations..." emptyMessage="No locations match your search." aria-label="Location" renderCreateForm={renderLocationCreateForm} />
                 </div>
                 <div>
                   <label className={labelClass}>Purchase Date</label>

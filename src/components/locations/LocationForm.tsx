@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, MapPinned, Save } from "lucide-react";
-import Combobox, { type ComboboxOption } from "@/components/shared/Combobox";
+import type { ComboboxOption } from "@/components/shared/Combobox";
+import CreatableCombobox from "@/components/shared/CreatableCombobox";
+import QuickCreateForm from "@/components/shared/QuickCreateForm";
 import type { RecordStatus } from "@/lib/constants";
 
 type LocationOption = { id: number; code: string; name: string; parentName: string | null };
@@ -134,7 +136,7 @@ export default function LocationForm({ initial }: { initial?: LocationFormInitia
           <div>
             <label className="text-sm font-medium text-slate-800">Parent Location</label>
             <p className="mb-2 text-xs text-slate-500">Optional — for a sub-location (e.g. a rack within a warehouse).</p>
-            <Combobox
+            <CreatableCombobox
               options={parentOptions}
               value={parentId}
               onChange={setParentId}
@@ -142,6 +144,25 @@ export default function LocationForm({ initial }: { initial?: LocationFormInitia
               placeholder="Search locations..."
               emptyMessage="No locations match your search."
               aria-label="Parent Location"
+              renderCreateForm={({ query, onCreated, onCancel }) => (
+                <QuickCreateForm
+                  title="New Location"
+                  endpoint="/api/locations"
+                  fields={[
+                    { name: "code", label: "Code", required: true, placeholder: "WH-01" },
+                    { name: "name", label: "Name", required: true, defaultValue: query, placeholder: "Main Warehouse" },
+                  ]}
+                  buildOption={(row) => ({ value: String(row.id), label: String(row.name), description: String(row.code) })}
+                  onCreated={(option, row) => {
+                    setLocations((prev) => [
+                      ...prev,
+                      { id: Number(row.id), code: String(row.code), name: String(row.name), parentName: null },
+                    ]);
+                    onCreated(option);
+                  }}
+                  onCancel={onCancel}
+                />
+              )}
             />
           </div>
           <div>

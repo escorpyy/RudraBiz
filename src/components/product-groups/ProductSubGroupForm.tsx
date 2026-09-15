@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Layers, Save } from "lucide-react";
-import Combobox, { type ComboboxOption } from "@/components/shared/Combobox";
+import type { ComboboxOption } from "@/components/shared/Combobox";
+import CreatableCombobox from "@/components/shared/CreatableCombobox";
+import QuickCreateForm from "@/components/shared/QuickCreateForm";
 import type { RecordStatus } from "@/lib/constants";
 
 type ProductGroupOption = { id: number; code: string; name: string; isActive: boolean };
@@ -100,7 +102,7 @@ export default function ProductSubGroupForm({ initial }: { initial?: ProductSubG
             Product Group <span className="text-rose-500">*</span>
           </label>
           <p className="mb-2 text-xs text-slate-500">The group this sub-group belongs to.</p>
-          <Combobox
+          <CreatableCombobox
             options={groupOptions}
             value={productGroupId}
             onChange={setProductGroupId}
@@ -108,6 +110,25 @@ export default function ProductSubGroupForm({ initial }: { initial?: ProductSubG
             placeholder={productGroups.length === 0 ? "No product groups available — create one first" : "Search product groups..."}
             emptyMessage="No product groups match your search."
             aria-label="Product Group"
+            renderCreateForm={({ query, onCreated, onCancel }) => (
+              <QuickCreateForm
+                title="New Product Group"
+                endpoint="/api/product-groups"
+                fields={[
+                  { name: "code", label: "Code", required: true, placeholder: "PG-100" },
+                  { name: "name", label: "Name", required: true, defaultValue: query, placeholder: "Building Materials" },
+                ]}
+                buildOption={(row) => ({ value: String(row.id), label: `${row.code} — ${row.name}` })}
+                onCreated={(option, row) => {
+                  setProductGroups((prev) => [
+                    ...prev,
+                    { id: Number(row.id), code: String(row.code), name: String(row.name), isActive: true },
+                  ]);
+                  onCreated(option);
+                }}
+                onCancel={onCancel}
+              />
+            )}
           />
         </div>
 

@@ -93,6 +93,36 @@ export const DEPRECIATION_METHODS: Record<DepreciationMethod, { label: string }>
   WRITTEN_DOWN_VALUE: { label: "Written Down Value" },
 };
 
+// Matches the "BusinessType" enum in prisma/schema.prisma.
+export type BusinessType =
+  | "SOLE_PROPRIETORSHIP"
+  | "PARTNERSHIP"
+  | "PRIVATE_LIMITED"
+  | "PUBLIC_LIMITED"
+  | "OTHER";
+
+export const BUSINESS_TYPES: Record<BusinessType, { label: string; badge: string }> = {
+  SOLE_PROPRIETORSHIP: { label: "Sole Proprietorship", badge: "bg-sky-50 text-sky-700" },
+  PARTNERSHIP: { label: "Partnership", badge: "bg-amber-50 text-amber-700" },
+  PRIVATE_LIMITED: { label: "Private Limited", badge: "bg-blue-50 text-blue-700" },
+  PUBLIC_LIMITED: { label: "Public Limited", badge: "bg-violet-50 text-violet-700" },
+  OTHER: { label: "Other", badge: "bg-slate-100 text-slate-600" },
+};
+
+export const BUSINESS_TYPE_LIST = Object.keys(BUSINESS_TYPES) as BusinessType[];
+
+// Matches the "CalendarPreference" enum in prisma/schema.prisma. BS is the
+// Bikram Sambat calendar used for statutory reporting in Nepal; AD is the
+// Gregorian calendar.
+export type CalendarPreference = "BS" | "AD";
+
+export const CALENDAR_PREFERENCES: Record<CalendarPreference, { label: string }> = {
+  BS: { label: "Bikram Sambat (BS)" },
+  AD: { label: "Gregorian (AD)" },
+};
+
+export const CALENDAR_PREFERENCE_LIST = Object.keys(CALENDAR_PREFERENCES) as CalendarPreference[];
+
 // Sidebar navigation tree. A node with `children` renders as a collapsible
 // section; a leaf has `href` and links directly. Nesting can go to any depth
 // (see "Inventory Reports" below, which nests a third level under Inventory).

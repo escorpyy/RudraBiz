@@ -155,6 +155,7 @@ export const NAV_ITEMS: NavNode[] = [
       { label: "Area Master", href: "/master/areas" },
       { label: "Agent Master", href: "/master/agents" },
       { label: "Narration Master", href: "/master/narrations" },
+      { label: "Fiscal Year Master", href: "/master/fiscal-years" },
       { label: "Opening Balance Master", href: "/master/opening-balance" },
     ],
   },

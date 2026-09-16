@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Landmark, Wallet, Users, FileEdit } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import GLTypeBadge from "@/components/general-ledger/GLTypeBadge";
 import StatusBadge from "@/components/account-groups/StatusBadge";
 import DetailActions from "@/components/shared/DetailActions";
@@ -21,8 +22,10 @@ export default async function ViewLedgerPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const ledger = await prisma.generalLedger.findUnique({
-    where: { id: Number(id) },
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const ledger = await prisma.generalLedger.findFirst({
+    where: { id: Number(id), companyId },
     include: {
       accountSubGroup: { include: { accountGroup: true } },
       parent: true,

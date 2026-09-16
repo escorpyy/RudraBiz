@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, BookOpen, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatusBadge from "@/components/account-groups/StatusBadge";
 import DetailActions from "@/components/shared/DetailActions";
 
@@ -13,8 +14,10 @@ export default async function ViewSubLedgerPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const subLedger = await prisma.subLedger.findUnique({
-    where: { id: Number(id) },
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const subLedger = await prisma.subLedger.findFirst({
+    where: { id: Number(id), OR: [{ generalLedger: { companyId } }, { party: { companyId } }] },
     include: { generalLedger: true, party: { include: { generalLedger: true } } },
   });
   if (!subLedger) notFound();

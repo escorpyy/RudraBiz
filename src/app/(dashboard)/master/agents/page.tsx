@@ -1,18 +1,23 @@
 import Link from "next/link";
 import { Plus, IdCard, BookOpen, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatCard from "@/components/account-groups/StatCard";
 import AgentsTable, { type AgentRow } from "@/components/agents/AgentsTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function AgentsPage() {
-  const agents = await prisma.agent.findMany({
-    orderBy: { code: "asc" },
-    include: {
-      _count: { select: { generalLedgers: true, parties: true } },
-    },
-  });
+  const { companyId } = await getCompanyContext();
+  const agents = companyId
+    ? await prisma.agent.findMany({
+        where: { companyId },
+        orderBy: { code: "asc" },
+        include: {
+          _count: { select: { generalLedgers: true, parties: true } },
+        },
+      })
+    : [];
 
   const rows: AgentRow[] = agents.map((a) => ({
     id: a.id,

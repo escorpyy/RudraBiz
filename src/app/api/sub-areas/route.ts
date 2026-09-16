@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { requireCompanyId } from "@/lib/companyContext";
 
 export const dynamic = "force-dynamic";
 
 // Feeds simple "select a sub-area" dropdowns (e.g. on the Party form) as
 // well as the Sub-Areas tab of the Area Master UI.
 export async function GET() {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const subAreas = await prisma.subArea.findMany({
-    where: { isActive: true },
+    where: { isActive: true, area: { companyId: ctx.companyId } },
     orderBy: [{ area: { name: "asc" } }, { name: "asc" }],
     select: { id: true, code: true, name: true, area: { select: { name: true } } },
   });
@@ -23,6 +27,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const body = await req.json();
   const { areaId, code, name, shortName, isActive } = body ?? {};
 
@@ -31,6 +38,11 @@ export async function POST(req: NextRequest) {
       { error: "areaId, code, name, and shortName are required." },
       { status: 400 }
     );
+  }
+
+  const parentArea = await prisma.area.findFirst({ where: { id: Number(areaId), companyId: ctx.companyId } });
+  if (!parentArea) {
+    return NextResponse.json({ error: "Area not found." }, { status: 400 });
   }
 
   try {

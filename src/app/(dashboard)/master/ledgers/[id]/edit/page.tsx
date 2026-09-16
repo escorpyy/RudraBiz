@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import GLForm from "@/components/general-ledger/GLForm";
 import GLInfoPanel from "@/components/general-ledger/GLInfoPanel";
 
@@ -13,8 +14,10 @@ export default async function EditLedgerPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const ledger = await prisma.generalLedger.findUnique({
-    where: { id: Number(id) },
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const ledger = await prisma.generalLedger.findFirst({
+    where: { id: Number(id), companyId },
     include: { accountSubGroup: true },
   });
   if (!ledger) notFound();

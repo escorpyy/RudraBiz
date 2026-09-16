@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { requireCompanyId } from "@/lib/companyContext";
 
 export const dynamic = "force-dynamic";
 
 // Also feeds the Location picker on the Product form (Stock default
 // location, Fixed Asset location).
 export async function GET() {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const locations = await prisma.location.findMany({
+    where: { companyId: ctx.companyId },
     orderBy: { code: "asc" },
     include: {
       parent: { select: { name: true } },
@@ -29,6 +34,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const body = await req.json();
   const { code, name, parentId, isActive } = body ?? {};
 
@@ -36,9 +44,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Code and Name are required." }, { status: 400 });
   }
 
+  if (parentId) {
+    const parent = await prisma.location.findFirst({ where: { id: Number(parentId), companyId: ctx.companyId } });
+    if (!parent) {
+      return NextResponse.json({ error: "Parent location not found." }, { status: 400 });
+    }
+  }
+
   try {
     const location = await prisma.location.create({
       data: {
+        companyId: ctx.companyId,
         code,
         name,
         parentId: parentId ? Number(parentId) : null,

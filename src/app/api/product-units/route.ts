@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { requireCompanyId } from "@/lib/companyContext";
 
 export const dynamic = "force-dynamic";
 
 // Also feeds "select a unit" pickers (base unit, alternate units,
 // non-stock/service unit) on the Product form.
 export async function GET() {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const units = await prisma.productUnit.findMany({
+    where: { companyId: ctx.companyId },
     orderBy: { code: "asc" },
     include: {
       _count: {
@@ -19,6 +24,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const body = await req.json();
   const { code, name, decimalPlaces, isActive } = body ?? {};
 
@@ -32,7 +40,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const unit = await prisma.productUnit.create({
-      data: { code, name, decimalPlaces: dp, isActive: typeof isActive === "boolean" ? isActive : true },
+      data: { companyId: ctx.companyId, code, name, decimalPlaces: dp, isActive: typeof isActive === "boolean" ? isActive : true },
     });
     return NextResponse.json(unit, { status: 201 });
   } catch (err) {

@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { requireCompanyId } from "@/lib/companyContext";
 
 export const dynamic = "force-dynamic";
 
 // Also feeds the Tax Rate picker on the Product form (Stock / Non-Stock /
 // Service details).
 export async function GET() {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const rates = await prisma.taxRate.findMany({
+    where: { companyId: ctx.companyId },
     orderBy: { code: "asc" },
     include: {
       _count: { select: { stockDetails: true, nonStockDetails: true, serviceDetails: true } },
@@ -17,6 +22,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const body = await req.json();
   const { code, name, ratePercent, hsnSacCode, isActive } = body ?? {};
 
@@ -31,6 +39,7 @@ export async function POST(req: NextRequest) {
   try {
     const taxRate = await prisma.taxRate.create({
       data: {
+        companyId: ctx.companyId,
         code,
         name,
         ratePercent: rate,

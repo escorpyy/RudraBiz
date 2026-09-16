@@ -2,13 +2,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import ProductSubGroupForm from "@/components/product-groups/ProductSubGroupForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditProductSubGroupPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const subGroup = await prisma.productSubGroup.findUnique({ where: { id: Number(id) } });
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const subGroup = await prisma.productSubGroup.findFirst({ where: { id: Number(id), productGroup: { companyId } } });
   if (!subGroup) notFound();
 
   return (

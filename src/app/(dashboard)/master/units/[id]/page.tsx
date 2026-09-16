@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatusBadge from "@/components/account-groups/StatusBadge";
 import DetailActions from "@/components/shared/DetailActions";
 
@@ -9,8 +10,10 @@ export const dynamic = "force-dynamic";
 
 export default async function ViewUnitPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const unit = await prisma.productUnit.findUnique({
-    where: { id: Number(id) },
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const unit = await prisma.productUnit.findFirst({
+    where: { id: Number(id), companyId },
     include: {
       _count: { select: { stockBaseFor: true, nonStockUnitFor: true, serviceUnitFor: true, alternateUnitFor: true } },
     },

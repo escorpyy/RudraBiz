@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import AreaForm from "@/components/areas/AreaForm";
 import AreaInfoPanel from "@/components/areas/AreaInfoPanel";
 
@@ -13,7 +14,9 @@ export default async function EditAreaPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const area = await prisma.area.findUnique({ where: { id: Number(id) } });
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const area = await prisma.area.findFirst({ where: { id: Number(id), companyId } });
   if (!area) notFound();
 
   return (

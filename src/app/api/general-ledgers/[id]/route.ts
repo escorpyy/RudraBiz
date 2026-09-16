@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireCompanyId } from "@/lib/companyContext";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
-  const ledger = await prisma.generalLedger.findUnique({
-    where: { id: Number(id) },
+  const ledger = await prisma.generalLedger.findFirst({
+    where: { id: Number(id), companyId: ctx.companyId },
     include: { accountSubGroup: { include: { accountGroup: true } }, parent: true },
   });
   if (!ledger) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -14,7 +18,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
+  const existing = await prisma.generalLedger.findFirst({ where: { id: Number(id), companyId: ctx.companyId } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const body = await req.json();
   const {
     code,
@@ -29,6 +39,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     allowDocAdjust,
     isActive,
   } = body ?? {};
+
+  if (accountSubGroupId !== undefined) {
+    const subGroup = await prisma.accountSubGroup.findFirst({
+      where: { id: Number(accountSubGroupId), accountGroup: { companyId: ctx.companyId } },
+    });
+    if (!subGroup) {
+      return NextResponse.json({ error: "Account sub-group not found." }, { status: 400 });
+    }
+  }
 
   try {
     const ledger = await prisma.generalLedger.update({
@@ -55,8 +74,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
   const ledgerId = Number(id);
+
+  const existing = await prisma.generalLedger.findFirst({ where: { id: ledgerId, companyId: ctx.companyId } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const childCount = await prisma.generalLedger.count({ where: { parentId: ledgerId } });
   if (childCount > 0) {

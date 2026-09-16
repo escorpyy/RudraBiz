@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { requireCompanyId } from "@/lib/companyContext";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
-  const taxRate = await prisma.taxRate.findUnique({
-    where: { id: Number(id) },
+  const taxRate = await prisma.taxRate.findFirst({
+    where: { id: Number(id), companyId: ctx.companyId },
     include: {
       _count: { select: { stockDetails: true, nonStockDetails: true, serviceDetails: true } },
     },
@@ -17,7 +21,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
+  const existing = await prisma.taxRate.findFirst({ where: { id: Number(id), companyId: ctx.companyId } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const body = await req.json();
   const { code, name, ratePercent, hsnSacCode, isActive } = body ?? {};
 
@@ -50,7 +60,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
+
+  const existing = await prisma.taxRate.findFirst({ where: { id: Number(id), companyId: ctx.companyId } });
+  if (!existing) return NextResponse.json({ error: "Tax rate not found." }, { status: 404 });
 
   try {
     // StockDetail/NonStockDetail/ServiceDetail.taxRateId are all

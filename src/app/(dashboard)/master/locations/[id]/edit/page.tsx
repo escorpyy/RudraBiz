@@ -2,13 +2,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import LocationForm from "@/components/locations/LocationForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditLocationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const location = await prisma.location.findUnique({ where: { id: Number(id) } });
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const location = await prisma.location.findFirst({ where: { id: Number(id), companyId } });
   if (!location) notFound();
 
   return (

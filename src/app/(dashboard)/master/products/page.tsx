@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus, Boxes, CheckCircle2, Package } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatCard from "@/components/account-groups/StatCard";
 import ProductsTable, { type ProductRow } from "@/components/products/ProductsTable";
 import type { ProductType } from "@/lib/constants";
@@ -8,10 +9,14 @@ import type { ProductType } from "@/lib/constants";
 export const dynamic = "force-dynamic";
 
 export default async function ProductsPage() {
-  const products = await prisma.product.findMany({
-    orderBy: { code: "asc" },
-    include: { productSubGroup: { include: { productGroup: true } } },
-  });
+  const { companyId } = await getCompanyContext();
+  const products = companyId
+    ? await prisma.product.findMany({
+        where: { companyId },
+        orderBy: { code: "asc" },
+        include: { productSubGroup: { include: { productGroup: true } } },
+      })
+    : [];
 
   const rows: ProductRow[] = products.map((p) => ({
     id: p.id,

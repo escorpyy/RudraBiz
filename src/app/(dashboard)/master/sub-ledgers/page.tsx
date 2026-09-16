@@ -1,16 +1,21 @@
 import Link from "next/link";
 import { Plus, Layers, CheckCircle2, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatCard from "@/components/account-groups/StatCard";
 import SubLedgersTable, { type SubLedgerRow } from "@/components/sub-ledgers/SubLedgersTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function SubLedgersPage() {
-  const subLedgers = await prisma.subLedger.findMany({
-    orderBy: { code: "asc" },
-    include: { generalLedger: true, party: { include: { generalLedger: true } } },
-  });
+  const { companyId } = await getCompanyContext();
+  const subLedgers = companyId
+    ? await prisma.subLedger.findMany({
+        where: { OR: [{ generalLedger: { companyId } }, { party: { companyId } }] },
+        orderBy: { code: "asc" },
+        include: { generalLedger: true, party: { include: { generalLedger: true } } },
+      })
+    : [];
 
   const rows: SubLedgerRow[] = subLedgers.map((s) => ({
     id: s.id,

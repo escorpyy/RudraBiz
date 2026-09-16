@@ -2,9 +2,14 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { requireCompanyId } from "@/lib/companyContext";
 
 export async function GET() {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const groups = await prisma.accountGroup.findMany({
+    where: { companyId: ctx.companyId },
     orderBy: { code: "asc" },
     include: { subGroups: { include: { _count: { select: { generalLedgers: true } } } } },
   });
@@ -12,6 +17,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const body = await req.json();
   const { type, code, description, isActive } = body ?? {};
 
@@ -25,6 +33,7 @@ export async function POST(req: NextRequest) {
   try {
     const group = await prisma.accountGroup.create({
       data: {
+        companyId: ctx.companyId,
         type,
         code,
         description,

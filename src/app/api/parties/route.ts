@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { GLType } from "@prisma/client";
+import { requireCompanyId } from "@/lib/companyContext";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,11 @@ export const dynamic = "force-dynamic";
 // (id/code/name) is what dropdowns elsewhere (e.g. the Sub-Ledger form)
 // consume; the full Party Master list page queries prisma directly instead.
 export async function GET() {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const parties = await prisma.party.findMany({
+    where: { companyId: ctx.companyId },
     orderBy: { generalLedger: { name: "asc" } },
     select: {
       id: true,
@@ -28,6 +33,9 @@ export async function GET() {
 const PARTY_GL_TYPES: GLType[] = ["CUSTOMER", "VENDOR", "BOTH"];
 
 export async function POST(req: NextRequest) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const body = await req.json();
   const {
     code,
@@ -66,8 +74,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const subGroup = await prisma.accountSubGroup.findUnique({
-      where: { id: Number(accountSubGroupId) },
+    const subGroup = await prisma.accountSubGroup.findFirst({
+      where: { id: Number(accountSubGroupId), accountGroup: { companyId: ctx.companyId } },
       include: { accountGroup: true },
     });
     if (!subGroup) {
@@ -81,8 +89,12 @@ export async function POST(req: NextRequest) {
         : "CREDIT";
 
     const party = await prisma.$transaction(async (tx) => {
+      // companyId on both creates below is overwritten by
+      // trg_sync_gl_company / trg_sync_party_company respectively —
+      // passed here only because Prisma's create input requires it.
       const generalLedger = await tx.generalLedger.create({
         data: {
+          companyId: ctx.companyId,
           code,
           name,
           accountSubGroupId: Number(accountSubGroupId),
@@ -94,6 +106,7 @@ export async function POST(req: NextRequest) {
 
       const created = await tx.party.create({
         data: {
+          companyId: ctx.companyId,
           generalLedgerId: generalLedger.id,
           address: address || null,
           city: city || null,

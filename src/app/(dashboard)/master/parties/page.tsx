@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus, Users, CheckCircle2, Truck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatCard from "@/components/account-groups/StatCard";
 import PartiesTable, { type PartyRow } from "@/components/parties/PartiesTable";
 import type { GLType } from "@/lib/constants";
@@ -8,14 +9,18 @@ import type { GLType } from "@/lib/constants";
 export const dynamic = "force-dynamic";
 
 export default async function PartiesPage() {
-  const parties = await prisma.party.findMany({
-    orderBy: { generalLedger: { name: "asc" } },
-    include: {
-      generalLedger: true,
-      subArea: { include: { area: true } },
-      agent: true,
-    },
-  });
+  const { companyId } = await getCompanyContext();
+  const parties = companyId
+    ? await prisma.party.findMany({
+        where: { companyId },
+        orderBy: { generalLedger: { name: "asc" } },
+        include: {
+          generalLedger: true,
+          subArea: { include: { area: true } },
+          agent: true,
+        },
+      })
+    : [];
 
   const rows: PartyRow[] = parties.map((p) => ({
     id: p.id,

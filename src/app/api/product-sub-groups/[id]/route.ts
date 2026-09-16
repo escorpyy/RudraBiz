@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { requireCompanyId } from "@/lib/companyContext";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
-  const subGroup = await prisma.productSubGroup.findUnique({
-    where: { id: Number(id) },
+  const subGroup = await prisma.productSubGroup.findFirst({
+    where: { id: Number(id), productGroup: { companyId: ctx.companyId } },
     include: {
       productGroup: true,
       products: { orderBy: { code: "asc" }, select: { id: true, code: true, description: true, type: true, isActive: true } },
@@ -18,9 +22,26 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
+  const existing = await prisma.productSubGroup.findFirst({
+    where: { id: Number(id), productGroup: { companyId: ctx.companyId } },
+  });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const body = await req.json();
   const { productGroupId, code, name, isActive } = body ?? {};
+
+  if (productGroupId !== undefined) {
+    const parentGroup = await prisma.productGroup.findFirst({
+      where: { id: Number(productGroupId), companyId: ctx.companyId },
+    });
+    if (!parentGroup) {
+      return NextResponse.json({ error: "Product group not found." }, { status: 400 });
+    }
+  }
 
   try {
     const subGroup = await prisma.productSubGroup.update({
@@ -46,8 +67,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
   const subGroupId = Number(id);
+
+  const existing = await prisma.productSubGroup.findFirst({
+    where: { id: subGroupId, productGroup: { companyId: ctx.companyId } },
+  });
+  if (!existing) return NextResponse.json({ error: "Product sub-group not found." }, { status: 404 });
 
   const productCount = await prisma.product.count({ where: { productSubGroupId: subGroupId } });
   if (productCount > 0) {

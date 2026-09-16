@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Plus, BookOpen, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatusBadge from "@/components/account-groups/StatusBadge";
 import DetailActions from "@/components/shared/DetailActions";
 
@@ -13,8 +14,10 @@ export default async function ViewSubAreaPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const subArea = await prisma.subArea.findUnique({
-    where: { id: Number(id) },
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const subArea = await prisma.subArea.findFirst({
+    where: { id: Number(id), area: { companyId } },
     include: {
       area: true,
       generalLedgers: { orderBy: { code: "asc" } },

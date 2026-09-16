@@ -1,16 +1,21 @@
 import Link from "next/link";
 import { Plus, MapPinned, CheckCircle2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatCard from "@/components/account-groups/StatCard";
 import LocationsTable, { type LocationRow } from "@/components/locations/LocationsTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function LocationsPage() {
-  const locations = await prisma.location.findMany({
-    orderBy: { code: "asc" },
-    include: { parent: { select: { name: true } }, _count: { select: { children: true } } },
-  });
+  const { companyId } = await getCompanyContext();
+  const locations = companyId
+    ? await prisma.location.findMany({
+        where: { companyId },
+        orderBy: { code: "asc" },
+        include: { parent: { select: { name: true } }, _count: { select: { children: true } } },
+      })
+    : [];
 
   const rows: LocationRow[] = locations.map((l) => ({
     id: l.id,

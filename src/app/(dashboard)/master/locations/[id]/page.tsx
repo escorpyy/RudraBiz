@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, MapPinned } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatusBadge from "@/components/account-groups/StatusBadge";
 import DetailActions from "@/components/shared/DetailActions";
 
@@ -9,8 +10,10 @@ export const dynamic = "force-dynamic";
 
 export default async function ViewLocationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const location = await prisma.location.findUnique({
-    where: { id: Number(id) },
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const location = await prisma.location.findFirst({
+    where: { id: Number(id), companyId },
     include: {
       parent: true,
       children: { orderBy: { code: "asc" } },

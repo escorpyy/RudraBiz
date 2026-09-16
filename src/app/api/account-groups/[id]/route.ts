@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireCompanyId } from "@/lib/companyContext";
 
 // 💡 This line forces Next.js to treat this route as completely dynamic, 
 // stopping it from running database queries during the build process.
 export const dynamic = 'force-dynamic';
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
-  const group = await prisma.accountGroup.findUnique({
-    where: { id: Number(id) },
+  const group = await prisma.accountGroup.findFirst({
+    where: { id: Number(id), companyId: ctx.companyId },
     include: { subGroups: { include: { generalLedgers: true } } },
   });
   if (!group) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -16,7 +20,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
+  const existing = await prisma.accountGroup.findFirst({ where: { id: Number(id), companyId: ctx.companyId } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const body = await req.json();
   const { type, code, description, isActive } = body ?? {};
 
@@ -28,8 +38,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
   const groupId = Number(id);
+
+  const existing = await prisma.accountGroup.findFirst({ where: { id: groupId, companyId: ctx.companyId } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const subGroupCount = await prisma.accountSubGroup.count({ where: { accountGroupId: groupId } });
   if (subGroupCount > 0) {

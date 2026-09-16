@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma, type ProductType } from "@prisma/client";
+import { requireCompanyId } from "@/lib/companyContext";
 
 export const dynamic = "force-dynamic";
 
@@ -9,8 +10,11 @@ export const dynamic = "force-dynamic";
 // product"). The full Product Master list page queries prisma directly in
 // the page component, same convention as Parties/Ledgers.
 export async function GET() {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const products = await prisma.product.findMany({
-    where: { isActive: true },
+    where: { isActive: true, companyId: ctx.companyId },
     orderBy: { code: "asc" },
     select: { id: true, code: true, description: true, type: true },
   });
@@ -20,6 +24,9 @@ export async function GET() {
 const PRODUCT_TYPES: ProductType[] = ["STOCK", "NON_STOCK", "SERVICE", "FIXED_ASSET", "BUNDLE"];
 
 export async function POST(req: NextRequest) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const body = await req.json();
   const {
     code,
@@ -121,9 +128,17 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const subGroup = await prisma.productSubGroup.findFirst({
+      where: { id: Number(productSubGroupId), productGroup: { companyId: ctx.companyId } },
+    });
+    if (!subGroup) {
+      return NextResponse.json({ error: "Product sub-group not found." }, { status: 400 });
+    }
+
     const product = await prisma.$transaction(async (tx) => {
       const created = await tx.product.create({
         data: {
+          companyId: ctx.companyId,
           code,
           description,
           shortName: shortName || null,

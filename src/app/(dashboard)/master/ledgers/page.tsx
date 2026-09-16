@@ -1,16 +1,21 @@
 import Link from "next/link";
 import { Plus, BookOpen, Landmark, CheckCircle2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatCard from "@/components/account-groups/StatCard";
 import GLTable, { type GeneralLedgerRow } from "@/components/general-ledger/GLTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function LedgersPage() {
-  const ledgers = await prisma.generalLedger.findMany({
-    orderBy: { code: "asc" },
-    include: { accountSubGroup: { include: { accountGroup: true } }, parent: true },
-  });
+  const { companyId } = await getCompanyContext();
+  const ledgers = companyId
+    ? await prisma.generalLedger.findMany({
+        where: { companyId },
+        orderBy: { code: "asc" },
+        include: { accountSubGroup: { include: { accountGroup: true } }, parent: true },
+      })
+    : [];
 
   const rows: GeneralLedgerRow[] = ledgers.map((l) => ({
     id: l.id,

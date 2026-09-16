@@ -1,18 +1,23 @@
 import Link from "next/link";
 import { Plus, Ruler, CheckCircle2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatCard from "@/components/account-groups/StatCard";
 import UnitsTable, { type UnitRow } from "@/components/units/UnitsTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function UnitsPage() {
-  const units = await prisma.productUnit.findMany({
-    orderBy: { code: "asc" },
-    include: {
-      _count: { select: { stockBaseFor: true, nonStockUnitFor: true, serviceUnitFor: true, alternateUnitFor: true } },
-    },
-  });
+  const { companyId } = await getCompanyContext();
+  const units = companyId
+    ? await prisma.productUnit.findMany({
+        where: { companyId },
+        orderBy: { code: "asc" },
+        include: {
+          _count: { select: { stockBaseFor: true, nonStockUnitFor: true, serviceUnitFor: true, alternateUnitFor: true } },
+        },
+      })
+    : [];
 
   const rows: UnitRow[] = units.map((u) => ({
     id: u.id,

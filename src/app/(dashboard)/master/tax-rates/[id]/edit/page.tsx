@@ -2,13 +2,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import TaxRateForm from "@/components/tax-rates/TaxRateForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditTaxRatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const taxRate = await prisma.taxRate.findUnique({ where: { id: Number(id) } });
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const taxRate = await prisma.taxRate.findFirst({ where: { id: Number(id), companyId } });
   if (!taxRate) notFound();
 
   return (

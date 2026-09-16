@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import AgentForm from "@/components/agents/AgentForm";
 import AgentInfoPanel from "@/components/agents/AgentInfoPanel";
 
@@ -13,7 +14,9 @@ export default async function EditAgentPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const agent = await prisma.agent.findUnique({ where: { id: Number(id) } });
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const agent = await prisma.agent.findFirst({ where: { id: Number(id), companyId } });
   if (!agent) notFound();
 
   return (

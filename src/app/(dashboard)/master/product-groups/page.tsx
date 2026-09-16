@@ -1,16 +1,21 @@
 import Link from "next/link";
 import { Plus, Layers, CheckCircle2, Boxes } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatCard from "@/components/account-groups/StatCard";
 import ProductGroupsTable, { type ProductGroupRow } from "@/components/product-groups/ProductGroupsTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProductGroupsPage() {
-  const groups = await prisma.productGroup.findMany({
-    orderBy: { code: "asc" },
-    include: { subGroups: { include: { _count: { select: { products: true } } } } },
-  });
+  const { companyId } = await getCompanyContext();
+  const groups = companyId
+    ? await prisma.productGroup.findMany({
+        where: { companyId },
+        orderBy: { code: "asc" },
+        include: { subGroups: { include: { _count: { select: { products: true } } } } },
+      })
+    : [];
 
   const rows: ProductGroupRow[] = groups.map((g) => ({
     id: g.id,

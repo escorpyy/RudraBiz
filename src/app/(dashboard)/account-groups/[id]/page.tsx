@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Plus, Layers } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import AccountTypeBadge from "@/components/account-groups/AccountTypeBadge";
 import StatusBadge from "@/components/account-groups/StatusBadge";
 import DetailActions from "@/components/shared/DetailActions";
@@ -14,8 +15,10 @@ export default async function ViewAccountGroupPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const group = await prisma.accountGroup.findUnique({
-    where: { id: Number(id) },
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const group = await prisma.accountGroup.findFirst({
+    where: { id: Number(id), companyId },
     include: {
       subGroups: {
         orderBy: { code: "asc" },

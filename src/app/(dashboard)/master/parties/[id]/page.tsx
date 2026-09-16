@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, MapPin, Mail, Phone, Smartphone, User, ShieldCheck, CreditCard, Truck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import GLTypeBadge from "@/components/general-ledger/GLTypeBadge";
 import StatusBadge from "@/components/account-groups/StatusBadge";
 import DetailActions from "@/components/shared/DetailActions";
@@ -14,8 +15,10 @@ export default async function ViewPartyPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const party = await prisma.party.findUnique({
-    where: { id: Number(id) },
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const party = await prisma.party.findFirst({
+    where: { id: Number(id), companyId },
     include: {
       generalLedger: { include: { accountSubGroup: { include: { accountGroup: true } } } },
       subArea: { include: { area: true } },

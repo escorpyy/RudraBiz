@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import PartyForm from "@/components/parties/PartyForm";
 import PartyInfoPanel from "@/components/parties/PartyInfoPanel";
 
@@ -13,8 +14,10 @@ export default async function EditPartyPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const party = await prisma.party.findUnique({
-    where: { id: Number(id) },
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const party = await prisma.party.findFirst({
+    where: { id: Number(id), companyId },
     include: {
       generalLedger: { include: { accountSubGroup: true } },
       customerDetail: true,

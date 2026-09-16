@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import ProductForm, { type ProductFormInitial } from "@/components/products/ProductForm";
 import ProductInfoPanel from "@/components/products/ProductInfoPanel";
 import type { ProductType, ValuationMethod, DepreciationMethod } from "@/lib/constants";
@@ -20,8 +21,10 @@ function dateInput(value: Date | null): string {
 
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const product = await prisma.product.findUnique({
-    where: { id: Number(id) },
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const product = await prisma.product.findFirst({
+    where: { id: Number(id), companyId },
     include: {
       productSubGroup: true,
       stockDetail: { include: { alternateUnits: true } },

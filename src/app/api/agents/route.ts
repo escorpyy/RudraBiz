@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { requireCompanyId } from "@/lib/companyContext";
 
 export const dynamic = "force-dynamic";
 
@@ -9,8 +10,11 @@ export const dynamic = "force-dynamic";
 // directly via prisma in the page component — this route stays scoped to
 // the active-only, minimal-fields shape the dropdowns expect.
 export async function GET() {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const agents = await prisma.agent.findMany({
-    where: { isActive: true },
+    where: { isActive: true, companyId: ctx.companyId },
     orderBy: { code: "asc" },
     select: { id: true, code: true, name: true },
   });
@@ -18,6 +22,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const body = await req.json();
   const { code, name, phone, isActive } = body ?? {};
 
@@ -31,6 +38,7 @@ export async function POST(req: NextRequest) {
   try {
     const agent = await prisma.agent.create({
       data: {
+        companyId: ctx.companyId,
         code,
         name,
         phone: phone || null,

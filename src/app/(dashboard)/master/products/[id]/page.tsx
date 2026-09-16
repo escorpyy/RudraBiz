@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Ruler, Tags, MapPinned, Landmark, Truck, Boxes } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import ProductTypeBadge from "@/components/products/ProductTypeBadge";
 import StatusBadge from "@/components/account-groups/StatusBadge";
 import DetailActions from "@/components/shared/DetailActions";
@@ -17,8 +18,10 @@ function fmt(value: unknown): string {
 
 export default async function ViewProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const product = await prisma.product.findUnique({
-    where: { id: Number(id) },
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const product = await prisma.product.findFirst({
+    where: { id: Number(id), companyId },
     include: {
       productSubGroup: { include: { productGroup: true } },
       stockDetail: {

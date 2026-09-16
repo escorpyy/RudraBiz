@@ -1,19 +1,24 @@
 import Link from "next/link";
 import { Plus, MapPinned } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatCard from "@/components/account-groups/StatCard";
 import SubAreasTable, { type SubAreaRow } from "@/components/areas/SubAreasTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function SubAreasPage() {
-  const subAreas = await prisma.subArea.findMany({
-    orderBy: { code: "asc" },
-    include: {
-      area: true,
-      _count: { select: { generalLedgers: true, parties: true } },
-    },
-  });
+  const { companyId } = await getCompanyContext();
+  const subAreas = companyId
+    ? await prisma.subArea.findMany({
+        where: { area: { companyId } },
+        orderBy: { code: "asc" },
+        include: {
+          area: true,
+          _count: { select: { generalLedgers: true, parties: true } },
+        },
+      })
+    : [];
 
   const rows: SubAreaRow[] = subAreas.map((sa) => ({
     id: sa.id,

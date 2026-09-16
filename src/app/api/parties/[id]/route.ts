@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { GLType } from "@prisma/client";
+import { requireCompanyId } from "@/lib/companyContext";
 
 export const dynamic = "force-dynamic";
 
 const PARTY_GL_TYPES: GLType[] = ["CUSTOMER", "VENDOR", "BOTH"];
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
-  const party = await prisma.party.findUnique({
-    where: { id: Number(id) },
+  const party = await prisma.party.findFirst({
+    where: { id: Number(id), companyId: ctx.companyId },
     include: {
       generalLedger: { include: { accountSubGroup: { include: { accountGroup: true } } } },
       subArea: { include: { area: true } },
@@ -23,6 +27,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
   const body = await req.json();
   const {
@@ -56,10 +63,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   try {
-    const existing = await prisma.party.findUnique({ where: { id: Number(id) } });
+    const existing = await prisma.party.findFirst({ where: { id: Number(id), companyId: ctx.companyId } });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+
+    if (accountSubGroupId !== undefined) {
+      const subGroup = await prisma.accountSubGroup.findFirst({
+        where: { id: Number(accountSubGroupId), accountGroup: { companyId: ctx.companyId } },
+      });
+      if (!subGroup) {
+        return NextResponse.json({ error: "Account sub-group not found." }, { status: 400 });
+      }
+    }
+
     const effectiveGlType: GLType = glType ?? (await prisma.generalLedger
       .findUnique({ where: { id: existing.generalLedgerId }, select: { glType: true } })
     )!.glType;
@@ -138,8 +155,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
   const partyId = Number(id);
+
+  const existing = await prisma.party.findFirst({ where: { id: partyId, companyId: ctx.companyId } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const subLedgerCount = await prisma.subLedger.count({ where: { partyId } });
   if (subLedgerCount > 0) {

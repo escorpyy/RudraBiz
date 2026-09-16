@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { requireCompanyId } from "@/lib/companyContext";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
-  const subArea = await prisma.subArea.findUnique({
-    where: { id: Number(id) },
+  const subArea = await prisma.subArea.findFirst({
+    where: { id: Number(id), area: { companyId: ctx.companyId } },
     include: {
       area: true,
       generalLedgers: { orderBy: { code: "asc" } },
@@ -19,9 +23,24 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
+  const existing = await prisma.subArea.findFirst({
+    where: { id: Number(id), area: { companyId: ctx.companyId } },
+  });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const body = await req.json();
   const { areaId, code, name, shortName, isActive } = body ?? {};
+
+  if (areaId !== undefined) {
+    const parentArea = await prisma.area.findFirst({ where: { id: Number(areaId), companyId: ctx.companyId } });
+    if (!parentArea) {
+      return NextResponse.json({ error: "Area not found." }, { status: 400 });
+    }
+  }
 
   try {
     const subArea = await prisma.subArea.update({
@@ -48,8 +67,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
   const subAreaId = Number(id);
+
+  const existing = await prisma.subArea.findFirst({
+    where: { id: subAreaId, area: { companyId: ctx.companyId } },
+  });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const [ledgerCount, partyCount] = await Promise.all([
     prisma.generalLedger.count({ where: { subAreaId } }),

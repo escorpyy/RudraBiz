@@ -1,20 +1,25 @@
 import Link from "next/link";
 import { Plus, MapPin, MapPinned, BookOpen } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatCard from "@/components/account-groups/StatCard";
 import AreasTable, { type AreaRow } from "@/components/areas/AreasTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function AreasPage() {
-  const areas = await prisma.area.findMany({
-    orderBy: { code: "asc" },
-    include: {
-      subAreas: {
-        include: { _count: { select: { generalLedgers: true, parties: true } } },
-      },
-    },
-  });
+  const { companyId } = await getCompanyContext();
+  const areas = companyId
+    ? await prisma.area.findMany({
+        where: { companyId },
+        orderBy: { code: "asc" },
+        include: {
+          subAreas: {
+            include: { _count: { select: { generalLedgers: true, parties: true } } },
+          },
+        },
+      })
+    : [];
 
   const rows: AreaRow[] = areas.map((a) => ({
     id: a.id,

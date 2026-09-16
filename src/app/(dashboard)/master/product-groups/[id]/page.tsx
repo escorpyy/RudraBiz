@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Tags } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatusBadge from "@/components/account-groups/StatusBadge";
 import DetailActions from "@/components/shared/DetailActions";
 
@@ -9,8 +10,10 @@ export const dynamic = "force-dynamic";
 
 export default async function ViewProductGroupPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const group = await prisma.productGroup.findUnique({
-    where: { id: Number(id) },
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const group = await prisma.productGroup.findFirst({
+    where: { id: Number(id), companyId },
     include: { subGroups: { orderBy: { code: "asc" }, include: { _count: { select: { products: true } } } } },
   });
   if (!group) notFound();

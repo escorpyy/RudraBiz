@@ -1,16 +1,21 @@
 import Link from "next/link";
 import { Plus, Tags, CheckCircle2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatCard from "@/components/account-groups/StatCard";
 import ProductSubGroupsTable, { type ProductSubGroupRow } from "@/components/product-groups/ProductSubGroupsTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProductSubGroupsPage() {
-  const subGroups = await prisma.productSubGroup.findMany({
-    orderBy: { code: "asc" },
-    include: { productGroup: true, _count: { select: { products: true } } },
-  });
+  const { companyId } = await getCompanyContext();
+  const subGroups = companyId
+    ? await prisma.productSubGroup.findMany({
+        where: { productGroup: { companyId } },
+        orderBy: { code: "asc" },
+        include: { productGroup: true, _count: { select: { products: true } } },
+      })
+    : [];
 
   const rows: ProductSubGroupRow[] = subGroups.map((sg) => ({
     id: sg.id,

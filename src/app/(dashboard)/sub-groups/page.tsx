@@ -1,16 +1,21 @@
 import Link from "next/link";
 import { Plus, Network } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatCard from "@/components/account-groups/StatCard";
 import SubGroupsTable, { type SubGroupRow } from "@/components/sub-groups/SubGroupsTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function SubGroupsPage() {
-  const subGroups = await prisma.accountSubGroup.findMany({
-    orderBy: { code: "asc" },
-    include: { accountGroup: true, _count: { select: { generalLedgers: true } } },
-  });
+  const { companyId } = await getCompanyContext();
+  const subGroups = companyId
+    ? await prisma.accountSubGroup.findMany({
+        where: { accountGroup: { companyId } },
+        orderBy: { code: "asc" },
+        include: { accountGroup: true, _count: { select: { generalLedgers: true } } },
+      })
+    : [];
 
   const rows: SubGroupRow[] = subGroups.map((sg) => ({
     id: sg.id,

@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireCompanyId } from "@/lib/companyContext";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const ledgers = await prisma.generalLedger.findMany({
-    where: { isActive: true },
+    where: { isActive: true, companyId: ctx.companyId },
     orderBy: { code: "asc" },
     select: { id: true, code: true, name: true },
   });
@@ -13,6 +17,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const body = await req.json();
   const {
     code,
@@ -38,8 +45,8 @@ export async function POST(req: NextRequest) {
     // Normal balance isn't a user choice — it's dictated by the nature of the
     // account group this ledger sits under (asset/expense = debit,
     // liability/equity/revenue = credit).
-    const subGroup = await prisma.accountSubGroup.findUnique({
-      where: { id: Number(accountSubGroupId) },
+    const subGroup = await prisma.accountSubGroup.findFirst({
+      where: { id: Number(accountSubGroupId), accountGroup: { companyId: ctx.companyId } },
       include: { accountGroup: true },
     });
     if (!subGroup) {
@@ -52,6 +59,10 @@ export async function POST(req: NextRequest) {
 
     const ledger = await prisma.generalLedger.create({
       data: {
+        // trg_sync_gl_company overwrites this from accountSubGroupId's
+        // own AccountGroup, so this only needs to satisfy the required
+        // field on the create input.
+        companyId: ctx.companyId,
         code,
         name,
         accountSubGroupId: Number(accountSubGroupId),

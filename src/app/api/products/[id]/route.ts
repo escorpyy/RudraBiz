@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { requireCompanyId } from "@/lib/companyContext";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
-  const product = await prisma.product.findUnique({
-    where: { id: Number(id) },
+  const product = await prisma.product.findFirst({
+    where: { id: Number(id), companyId: ctx.companyId },
     include: {
       productSubGroup: { include: { productGroup: true } },
       stockDetail: {
@@ -45,6 +49,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
   const productId = Number(id);
   const body = await req.json();
@@ -105,9 +112,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   } = body ?? {};
 
   try {
-    const existing = await prisma.product.findUnique({ where: { id: productId } });
+    const existing = await prisma.product.findFirst({ where: { id: productId, companyId: ctx.companyId } });
     if (!existing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    if (productSubGroupId !== undefined) {
+      const subGroup = await prisma.productSubGroup.findFirst({
+        where: { id: Number(productSubGroupId), productGroup: { companyId: ctx.companyId } },
+      });
+      if (!subGroup) {
+        return NextResponse.json({ error: "Product sub-group not found." }, { status: 400 });
+      }
     }
 
     // Product Type is immutable once created — the schema's per-type detail
@@ -266,8 +282,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const { id } = await params;
   const productId = Number(id);
+
+  const existing = await prisma.product.findFirst({ where: { id: productId, companyId: ctx.companyId } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // Same dependent-record guard convention as account-groups/parties: a
   // product still referenced as a Bundle component (onDelete: Restrict on

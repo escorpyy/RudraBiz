@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import SubLedgerForm from "@/components/sub-ledgers/SubLedgerForm";
 import SubLedgerInfoPanel from "@/components/sub-ledgers/SubLedgerInfoPanel";
 
@@ -13,8 +14,10 @@ export default async function EditSubLedgerPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const subLedger = await prisma.subLedger.findUnique({
-    where: { id: Number(id) },
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const subLedger = await prisma.subLedger.findFirst({
+    where: { id: Number(id), OR: [{ generalLedger: { companyId } }, { party: { companyId } }] },
   });
   if (!subLedger) notFound();
 

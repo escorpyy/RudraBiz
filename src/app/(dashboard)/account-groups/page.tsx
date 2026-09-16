@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus, Layers, Network, BookOpen } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatCard from "@/components/account-groups/StatCard";
 import GroupsTable, { type AccountGroupRow } from "@/components/account-groups/GroupsTable";
 import AboutBanner from "@/components/account-groups/AboutBanner";
@@ -8,14 +9,18 @@ import AboutBanner from "@/components/account-groups/AboutBanner";
 export const dynamic = "force-dynamic";
 
 export default async function AccountGroupsPage() {
-  const groups = await prisma.accountGroup.findMany({
-    orderBy: { code: "asc" },
-    include: {
-      subGroups: {
-        include: { _count: { select: { generalLedgers: true } } },
-      },
-    },
-  });
+  const { companyId } = await getCompanyContext();
+  const groups = companyId
+    ? await prisma.accountGroup.findMany({
+        where: { companyId },
+        orderBy: { code: "asc" },
+        include: {
+          subGroups: {
+            include: { _count: { select: { generalLedgers: true } } },
+          },
+        },
+      })
+    : [];
 
   const rows: AccountGroupRow[] = groups.map((g) => ({
     id: String(g.id),

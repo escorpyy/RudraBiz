@@ -1,16 +1,21 @@
 import Link from "next/link";
 import { Plus, Tags, CheckCircle2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatCard from "@/components/account-groups/StatCard";
 import StockCategoriesTable, { type StockCategoryRow } from "@/components/stock-categories/StockCategoriesTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function StockCategoriesPage() {
-  const categories = await prisma.stockCategory.findMany({
-    orderBy: { code: "asc" },
-    include: { _count: { select: { stockDetails: true } } },
-  });
+  const { companyId } = await getCompanyContext();
+  const categories = companyId
+    ? await prisma.stockCategory.findMany({
+        where: { companyId },
+        orderBy: { code: "asc" },
+        include: { _count: { select: { stockDetails: true } } },
+      })
+    : [];
 
   const rows: StockCategoryRow[] = categories.map((c) => ({
     id: c.id,

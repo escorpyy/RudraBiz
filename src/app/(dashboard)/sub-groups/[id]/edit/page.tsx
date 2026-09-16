@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import SubGroupForm from "@/components/sub-groups/SubGroupForm";
 import InfoPanel from "@/components/account-groups/InfoPanel";
 
@@ -13,7 +14,9 @@ export default async function EditSubGroupPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const subGroup = await prisma.accountSubGroup.findUnique({ where: { id: Number(id) } });
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const subGroup = await prisma.accountSubGroup.findFirst({ where: { id: Number(id), accountGroup: { companyId } } });
   if (!subGroup) notFound();
 
   return (

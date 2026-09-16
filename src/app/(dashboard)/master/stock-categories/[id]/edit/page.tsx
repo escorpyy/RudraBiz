@@ -2,13 +2,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StockCategoryForm from "@/components/stock-categories/StockCategoryForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditStockCategoryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const category = await prisma.stockCategory.findUnique({ where: { id: Number(id) } });
+  const { companyId } = await getCompanyContext();
+  if (!companyId) notFound();
+  const category = await prisma.stockCategory.findFirst({ where: { id: Number(id), companyId } });
   if (!category) notFound();
 
   return (

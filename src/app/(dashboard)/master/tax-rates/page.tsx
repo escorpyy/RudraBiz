@@ -1,16 +1,21 @@
 import Link from "next/link";
 import { Plus, Percent, CheckCircle2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCompanyContext } from "@/lib/companyContext";
 import StatCard from "@/components/account-groups/StatCard";
 import TaxRatesTable, { type TaxRateRow } from "@/components/tax-rates/TaxRatesTable";
 
 export const dynamic = "force-dynamic";
 
 export default async function TaxRatesPage() {
-  const taxRates = await prisma.taxRate.findMany({
-    orderBy: { code: "asc" },
-    include: { _count: { select: { stockDetails: true, nonStockDetails: true, serviceDetails: true } } },
-  });
+  const { companyId } = await getCompanyContext();
+  const taxRates = companyId
+    ? await prisma.taxRate.findMany({
+        where: { companyId },
+        orderBy: { code: "asc" },
+        include: { _count: { select: { stockDetails: true, nonStockDetails: true, serviceDetails: true } } },
+      })
+    : [];
 
   const rows: TaxRateRow[] = taxRates.map((t) => ({
     id: t.id,

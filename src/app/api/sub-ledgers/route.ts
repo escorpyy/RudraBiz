@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireCompanyId } from "@/lib/companyContext";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const subLedgers = await prisma.subLedger.findMany({
-    where: { isActive: true },
+    where: {
+      isActive: true,
+      OR: [
+        { generalLedger: { companyId: ctx.companyId } },
+        { party: { companyId: ctx.companyId } },
+      ],
+    },
     orderBy: { code: "asc" },
     select: { id: true, code: true, name: true },
   });
@@ -13,6 +23,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const ctx = await requireCompanyId();
+  if (!ctx.ok) return NextResponse.json({ error: "No company selected." }, { status: 400 });
+
   const body = await req.json();
   const { code, name, generalLedgerId, partyId, isActive } = body ?? {};
 
@@ -25,13 +38,13 @@ export async function POST(req: NextRequest) {
 
   try {
     if (generalLedgerId) {
-      const gl = await prisma.generalLedger.findUnique({ where: { id: Number(generalLedgerId) } });
+      const gl = await prisma.generalLedger.findFirst({ where: { id: Number(generalLedgerId), companyId: ctx.companyId } });
       if (!gl) {
         return NextResponse.json({ error: "General ledger not found." }, { status: 400 });
       }
     }
     if (partyId) {
-      const party = await prisma.party.findUnique({ where: { id: Number(partyId) } });
+      const party = await prisma.party.findFirst({ where: { id: Number(partyId), companyId: ctx.companyId } });
       if (!party) {
         return NextResponse.json({ error: "Party not found." }, { status: 400 });
       }

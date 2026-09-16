@@ -227,11 +227,20 @@ voucher listings).
 ## 6. Domain-Specific (Accounting)
 
 ### Debit/Credit Balance Indicator
-A live-updating strip showing "Total Debit: X | Total Credit: Y | Difference: Z",
-turning green when balanced, red when not.
-**Where:** essential UX for Journal Voucher and Cash/Bank Voucher entry —
-double-entry bookkeeping requires this to be visible at all times while
-building a voucher, not just checked on submit.
+**✅ Built** — `src/components/shared/BalanceIndicator.tsx`. Live example: the
+strip above the table on Opening Balance Master (`master/opening-balance`).
+
+A strip showing "Total Debit: X | Total Credit: Y | Difference: Z",
+turning green when balanced, amber when not.
+**Where:** built first for Opening Balance Master (a company's opening trial
+balance has to balance), but kept generic and presentational — it takes plain
+numbers, so Journal Voucher and Cash/Bank Voucher entry can reuse it as-is for
+the live running total while lines are being typed, which double-entry
+bookkeeping requires to be visible at all times rather than checked on submit.
+
+```tsx
+<BalanceIndicator totalDebit={totalDebit} totalCredit={totalCredit} />
+```
 
 ### Amount-in-Words display
 Converts a numeric amount to its written-out form (e.g. "One Thousand Two

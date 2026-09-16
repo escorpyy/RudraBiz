@@ -17,7 +17,11 @@ export async function GET() {
       ],
     },
     orderBy: { code: "asc" },
-    select: { id: true, code: true, name: true },
+    // generalLedgerId is included so callers can narrow the list to the
+    // sub-ledgers under a chosen ledger (the Opening Balance form does
+    // this). Additive — existing consumers that only read id/code/name are
+    // unaffected.
+    select: { id: true, code: true, name: true, generalLedgerId: true },
   });
   return NextResponse.json(subLedgers);
 }

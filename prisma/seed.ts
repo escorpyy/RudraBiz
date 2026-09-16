@@ -119,23 +119,36 @@ async function seedCompanySetup() {
 
   // Grant with branchId = null, i.e. "All Branches" for this company —
   // not scoped to just the head office.
-  await prisma.userCompanyAccess.upsert({
+  //
+  // Note: we can't use upsert() with the userId_companyId_branchId
+  // compound unique here — Prisma's generated WhereUniqueInput type for a
+  // compound key doesn't accept `null` for a nullable field (NULL != NULL
+  // at the SQL level, so it's not a well-defined unique lookup). findFirst
+  // does accept `null` in a plain filter, so we emulate upsert manually.
+  const existingAccess = await prisma.userCompanyAccess.findFirst({
     where: {
-      userId_companyId_branchId: {
-        userId: adminUser.id,
-        companyId: company.id,
-        branchId: null,
-      },
-    },
-    update: { role: "ADMIN", isActive: true },
-    create: {
       userId: adminUser.id,
       companyId: company.id,
       branchId: null,
-      role: "ADMIN",
-      isActive: true,
     },
   });
+
+  if (existingAccess) {
+    await prisma.userCompanyAccess.update({
+      where: { id: existingAccess.id },
+      data: { role: "ADMIN", isActive: true },
+    });
+  } else {
+    await prisma.userCompanyAccess.create({
+      data: {
+        userId: adminUser.id,
+        companyId: company.id,
+        branchId: null,
+        role: "ADMIN",
+        isActive: true,
+      },
+    });
+  }
 
   return { company, headOffice, pokharaBranch, fiscalYear, adminUser };
 }

@@ -11,9 +11,33 @@ export async function GET() {
   const ledgers = await prisma.generalLedger.findMany({
     where: { isActive: true, companyId: ctx.companyId },
     orderBy: { code: "asc" },
-    select: { id: true, code: true, name: true },
+    select: {
+      id: true,
+      code: true,
+      name: true,
+      normalBalance: true,
+      // Group > Sub-Group path, so pickers (e.g. the Journal Voucher line
+      // Account Head combobox) can show where a ledger sits in the chart
+      // of accounts, same as the screenshot's "Expenses > Operating
+      // Expenses" caption.
+      accountSubGroup: {
+        select: {
+          description: true,
+          accountGroup: { select: { description: true } },
+        },
+      },
+    },
   });
-  return NextResponse.json(ledgers);
+
+  const shaped = ledgers.map((l) => ({
+    id: l.id,
+    code: l.code,
+    name: l.name,
+    normalBalance: l.normalBalance,
+    groupPath: `${l.accountSubGroup.accountGroup.description} > ${l.accountSubGroup.description}`,
+  }));
+
+  return NextResponse.json(shaped);
 }
 
 export async function POST(req: NextRequest) {

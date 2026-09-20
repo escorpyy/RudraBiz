@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 /**
  * Validation and error-mapping shared between the journal-voucher collection
@@ -81,7 +81,7 @@ export function describeWriteError(err: unknown): string {
  * @@unique constraint is the real guard against a collision.
  */
 export async function nextVoucherNumber(
-  prisma: { journalVoucher: { findMany: (args: unknown) => Promise<{ voucherNumber: string }[]> } },
+  prisma: PrismaClient | Prisma.TransactionClient,
   branchId: number
 ): Promise<string> {
   const year = new Date().getFullYear();

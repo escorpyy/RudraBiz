@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 
-export type JournalVoucherRow = {
+export type VoucherRow = {
   id: number;
   voucherNumber: string;
   voucherDate: string; // yyyy-mm-dd
@@ -31,14 +31,27 @@ export type JournalVoucherRow = {
 type PostedFilter = "ALL" | "POSTED" | "DRAFT";
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
-export default function JournalVouchersTable({ rows }: { rows: JournalVoucherRow[] }) {
+export default function VouchersTable({
+  rows,
+  basePath,
+  apiPath,
+  noun,
+}: {
+  rows: VoucherRow[];
+  /** e.g. "/transactions/journal-voucher" — view/edit links are built from this. */
+  basePath: string;
+  /** e.g. "/api/journal-vouchers" — delete calls hit `${apiPath}/${id}`. */
+  apiPath: string;
+  /** e.g. "journal voucher" — used in copy ("No journal vouchers match..."). */
+  noun: string;
+}) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<PostedFilter>("ALL");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const [deleteTarget, setDeleteTarget] = useState<JournalVoucherRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<VoucherRow | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -73,9 +86,9 @@ export default function JournalVouchersTable({ rows }: { rows: JournalVoucherRow
     setDeleting(true);
     setDeleteError(null);
     try {
-      const res = await fetch(`/api/journal-vouchers/${deleteTarget.id}`, { method: "DELETE" });
+      const res = await fetch(`${apiPath}/${deleteTarget.id}`, { method: "DELETE" });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.error ?? "Failed to delete journal voucher.");
+      if (!res.ok) throw new Error(body.error ?? `Failed to delete ${noun}.`);
       setDeleteTarget(null);
       router.refresh();
     } catch (err) {
@@ -144,7 +157,7 @@ export default function JournalVouchersTable({ rows }: { rows: JournalVoucherRow
               <tr key={row.id} className="hover:bg-slate-50/60">
                 <td className="px-5 py-3.5 text-slate-500">{(currentPage - 1) * pageSize + i + 1}</td>
                 <td className="px-3 py-3.5 font-medium text-slate-900">
-                  <Link href={`/transactions/journal-voucher/${row.id}`} className="hover:text-brand hover:underline">
+                  <Link href={`${basePath}/${row.id}`} className="hover:text-brand hover:underline">
                     {row.voucherNumber}
                   </Link>
                 </td>
@@ -167,7 +180,7 @@ export default function JournalVouchersTable({ rows }: { rows: JournalVoucherRow
                 <td className="px-5 py-3.5">
                   <div className="flex items-center justify-end gap-1.5">
                     <Link
-                      href={`/transactions/journal-voucher/${row.id}`}
+                      href={`${basePath}/${row.id}`}
                       title="View"
                       className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                     >
@@ -176,7 +189,7 @@ export default function JournalVouchersTable({ rows }: { rows: JournalVoucherRow
                     {!row.isPosted && (
                       <>
                         <Link
-                          href={`/transactions/journal-voucher/${row.id}/edit`}
+                          href={`${basePath}/${row.id}/edit`}
                           title="Edit"
                           className="rounded-md p-1.5 text-brand hover:bg-blue-50"
                         >
@@ -202,7 +215,7 @@ export default function JournalVouchersTable({ rows }: { rows: JournalVoucherRow
             {pageRows.length === 0 && (
               <tr>
                 <td colSpan={8} className="px-5 py-10 text-center text-sm text-slate-400">
-                  No journal vouchers match your filters.
+                  No {noun}s match your filters.
                 </td>
               </tr>
             )}

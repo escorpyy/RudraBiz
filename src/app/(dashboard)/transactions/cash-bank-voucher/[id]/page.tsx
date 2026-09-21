@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, MapPin, Undo2 } from "lucide-react";
+import { ArrowLeft, CalendarDays, MapPin, Undo2, Landmark } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getCompanyContext } from "@/lib/companyContext";
 import DetailActions from "@/components/shared/DetailActions";
@@ -8,12 +8,19 @@ import PostVoucherButton from "@/components/shared/PostVoucherButton";
 
 export const dynamic = "force-dynamic";
 
-export default async function ViewJournalVoucherPage({ params }: { params: Promise<{ id: string }> }) {
+const INSTRUMENT_LABELS: Record<string, string> = {
+  CHEQUE: "Cheque",
+  RTGS: "RTGS",
+  ONLINE_TRANSFER: "Online Transfer",
+  OTHER: "Other",
+};
+
+export default async function ViewCashBankVoucherPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { companyId } = await getCompanyContext();
   if (!companyId) notFound();
 
-  const voucher = await prisma.journalVoucher.findFirst({
+  const voucher = await prisma.cashBankVoucher.findFirst({
     where: { id: Number(id), companyId },
     include: {
       branch: { select: { name: true, code: true } },
@@ -21,7 +28,7 @@ export default async function ViewJournalVoucherPage({ params }: { params: Promi
       lines: {
         orderBy: { lineNumber: "asc" },
         include: {
-          generalLedger: { select: { id: true, code: true, name: true } },
+          generalLedger: { select: { id: true, code: true, name: true, isCashOrBank: true } },
           agent: { select: { name: true } },
         },
       },
@@ -52,8 +59,8 @@ export default async function ViewJournalVoucherPage({ params }: { params: Promi
             </span>
           </div>
           <div className="mt-1 flex items-center gap-1.5 text-sm">
-            <Link href="/transactions/journal-voucher" className="text-brand hover:underline">
-              Journal Voucher
+            <Link href="/transactions/cash-bank-voucher" className="text-brand hover:underline">
+              Cash / Bank Voucher
             </Link>
             <span className="text-slate-400">&gt;</span>
             <span className="text-slate-500">{voucher.voucherNumber}</span>
@@ -61,7 +68,7 @@ export default async function ViewJournalVoucherPage({ params }: { params: Promi
         </div>
         <div className="flex items-center gap-2.5">
           <Link
-            href="/transactions/journal-voucher"
+            href="/transactions/cash-bank-voucher"
             className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             <ArrowLeft size={16} />
@@ -69,11 +76,11 @@ export default async function ViewJournalVoucherPage({ params }: { params: Promi
           </Link>
           {!voucher.isPosted && (
             <>
-              <PostVoucherButton apiUrl={`/api/journal-vouchers/${voucher.id}`} voucherNumber={voucher.voucherNumber} />
+              <PostVoucherButton apiUrl={`/api/cash-bank-vouchers/${voucher.id}`} voucherNumber={voucher.voucherNumber} />
               <DetailActions
-                editHref={`/transactions/journal-voucher/${voucher.id}/edit`}
-                deleteUrl={`/api/journal-vouchers/${voucher.id}`}
-                redirectHref="/transactions/journal-voucher"
+                editHref={`/transactions/cash-bank-voucher/${voucher.id}/edit`}
+                deleteUrl={`/api/cash-bank-vouchers/${voucher.id}`}
+                redirectHref="/transactions/cash-bank-voucher"
                 entityName={voucher.voucherNumber}
               />
             </>
@@ -111,7 +118,7 @@ export default async function ViewJournalVoucherPage({ params }: { params: Promi
         <div className="mt-4 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-600">
           <Undo2 size={15} />
           Reverses{" "}
-          <Link href={`/transactions/journal-voucher/${voucher.reversalOf.id}`} className="font-medium text-brand hover:underline">
+          <Link href={`/transactions/cash-bank-voucher/${voucher.reversalOf.id}`} className="font-medium text-brand hover:underline">
             {voucher.reversalOf.voucherNumber}
           </Link>
         </div>
@@ -119,14 +126,15 @@ export default async function ViewJournalVoucherPage({ params }: { params: Promi
 
       {/* Lines */}
       <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-card">
-        <h2 className="text-base font-semibold text-slate-900">Journal Entries</h2>
+        <h2 className="text-base font-semibold text-slate-900">Voucher Entries</h2>
         <div className="my-5 border-t border-slate-200" />
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px] border-separate border-spacing-0 text-sm">
+          <table className="w-full min-w-[760px] border-separate border-spacing-0 text-sm">
             <thead>
               <tr className="text-left text-xs font-medium text-slate-500">
                 <th className="w-8 pb-2">#</th>
                 <th className="pb-2 pr-3">Account Head</th>
+                <th className="pb-2 pr-3">Instrument</th>
                 <th className="pb-2 pr-3">Agent</th>
                 <th className="pb-2 pr-3">Description</th>
                 <th className="pb-2 pr-3 text-right">Debit</th>
@@ -138,7 +146,28 @@ export default async function ViewJournalVoucherPage({ params }: { params: Promi
                 <tr key={l.id} className="border-t border-slate-100">
                   <td className="py-2.5 pr-3 text-slate-400">{i + 1}</td>
                   <td className="py-2.5 pr-3">
-                    <div className="font-medium text-slate-800">{l.generalLedger.code} — {l.generalLedger.name}</div>
+                    <div className="flex items-center gap-1.5 font-medium text-slate-800">
+                      {l.generalLedger.code} — {l.generalLedger.name}
+                      {l.generalLedger.isCashOrBank && <Landmark size={12} className="text-blue-500" />}
+                    </div>
+                  </td>
+                  <td className="py-2.5 pr-3 text-slate-600">
+                    {l.instrumentType ? (
+                      <div>
+                        <div>{INSTRUMENT_LABELS[l.instrumentType] ?? l.instrumentType}</div>
+                        {l.chequeNumber && (
+                          <div className="text-xs text-slate-400">
+                            #{l.chequeNumber}
+                            {l.chequeDate ? ` · ${l.chequeDate.toISOString().slice(0, 10)}` : ""}
+                            {l.chequeBankName ? ` · ${l.chequeBankName}` : ""}
+                          </div>
+                        )}
+                      </div>
+                    ) : l.generalLedger.isCashOrBank ? (
+                      "Cash"
+                    ) : (
+                      "—"
+                    )}
                   </td>
                   <td className="py-2.5 pr-3 text-slate-600">{l.agent?.name ?? "—"}</td>
                   <td className="py-2.5 pr-3 text-slate-600">{l.narration ?? "—"}</td>
@@ -153,7 +182,7 @@ export default async function ViewJournalVoucherPage({ params }: { params: Promi
             </tbody>
             <tfoot>
               <tr className="border-t border-slate-200 font-semibold text-slate-900">
-                <td colSpan={4} className="py-3 pr-3 text-right">
+                <td colSpan={5} className="py-3 pr-3 text-right">
                   Total
                 </td>
                 <td className="py-3 pr-3 text-right tabular-nums">{totalDebit.toFixed(2)}</td>

@@ -16,6 +16,7 @@ export async function GET() {
       code: true,
       name: true,
       normalBalance: true,
+      isCashOrBank: true,
       // Group > Sub-Group path, so pickers (e.g. the Journal Voucher line
       // Account Head combobox) can show where a ledger sits in the chart
       // of accounts, same as the screenshot's "Expenses > Operating
@@ -34,6 +35,7 @@ export async function GET() {
     code: l.code,
     name: l.name,
     normalBalance: l.normalBalance,
+    isCashOrBank: l.isCashOrBank,
     groupPath: `${l.accountSubGroup.accountGroup.description} > ${l.accountSubGroup.description}`,
   }));
 

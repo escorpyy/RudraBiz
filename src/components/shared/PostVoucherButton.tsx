@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 
-export default function PostVoucherButton({ voucherId, voucherNumber }: { voucherId: number; voucherNumber: string }) {
+export default function PostVoucherButton({ apiUrl, voucherNumber }: { apiUrl: string; voucherNumber: string }) {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [posting, setPosting] = useState(false);
@@ -15,7 +15,7 @@ export default function PostVoucherButton({ voucherId, voucherNumber }: { vouche
     setPosting(true);
     setError(null);
     try {
-      const res = await fetch(`/api/journal-vouchers/${voucherId}`, {
+      const res = await fetch(apiUrl, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ post: true }),

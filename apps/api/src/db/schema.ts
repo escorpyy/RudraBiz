@@ -353,8 +353,11 @@ export const user = pgTable("User", {
 	isActive: boolean().default(true).notNull(),
 	createdAt: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 	calendarPreference: calendarPreference().default('BS').notNull(),
+	// Links this app user to its Better Auth login (AuthUser.id). Null until first sign-up.
+	authUserId: text(),
 }, (table): PgTableExtraConfigValue[] => [
 	unique("User_email_key").on(table.email),
+	unique("User_authUserId_key").on(table.authUserId),
 ]);
 
 export const cashBankVoucherLine = pgTable("CashBankVoucherLine", {
@@ -1208,3 +1211,5 @@ export const vwLedgerTransactions = pgView("vw_ledger_transactions", {	source: t
 // ("fiscalYearId","branchId","stockDetailId", COALESCE("locationId",0), COALESCE("batchNo",''))
 // — exists in the database (see drizzle/0000_baseline.sql) but is not declared here:
 // drizzle-kit cannot introspect expression indexes. It is hand-maintained SQL.
+
+export * from "./authSchema";

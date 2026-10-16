@@ -1,0 +1,13 @@
+{
+  "name": "ntcas-accounting",
+  "private": true,
+  "version": "0.2.0",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "db:generate": "npm run db:generate -w @ntcas/api",
+    "db:migrate": "npm run db:migrate -w @ntcas/api"
+  },
+  "engines": { "node": ">=22" }
+}

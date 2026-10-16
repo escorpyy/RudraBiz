@@ -6,7 +6,7 @@ Monorepo (npm workspaces) mid-migration from Next.js + Prisma to the target stac
 |---|---|
 | `packages/shared` | Money (decimal.js), BS/AD dates, enums — used by web and api |
 | `apps/api` | Express + Drizzle ORM + PostgreSQL + Better Auth (DB, auth and company context done; module routes next) |
-| `apps/web` | React + Vite (not started) |
+| `apps/web` | React + Vite + Tailwind + React Router + TanStack Query (shell, login, company switcher; modules migrate one per patch) |
 | `legacy/` | The previous Next.js app. Still runnable on its own (`cd legacy && npm i && npm run dev`). Deleted at cutover. |
 
 ## Develop
@@ -16,6 +16,8 @@ npm install
 cp .env.example .env            # point DATABASE_URL at Postgres
 npm run db:migrate              # applies apps/api/drizzle/*.sql
 npm run typecheck && npm test
+npm run dev -w @ntcas/api       # http://localhost:4000
+npm run dev -w @ntcas/web       # http://localhost:5173 (proxies /api to the API)
 ```
 
 ## Auth and company context

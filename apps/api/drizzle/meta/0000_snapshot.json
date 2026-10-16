@@ -1,0 +1,6498 @@
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "prevId": "",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.GeneralLedger": {
+      "name": "GeneralLedger",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accountSubGroupId": {
+          "name": "accountSubGroupId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "normalBalance": {
+          "name": "normalBalance",
+          "type": "NormalBalance",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "glType": {
+          "name": "glType",
+          "type": "GLType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'OTHER'"
+        },
+        "parentId": {
+          "name": "parentId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isCashOrBank": {
+          "name": "isCashOrBank",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "postsToCashBook": {
+          "name": "postsToCashBook",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "requiresSubLedger": {
+          "name": "requiresSubLedger",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "allowDocAdjust": {
+          "name": "allowDocAdjust",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "subAreaId": {
+          "name": "subAreaId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "agentId": {
+          "name": "agentId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "GeneralLedger_accountSubGroupId_idx": {
+          "name": "GeneralLedger_accountSubGroupId_idx",
+          "columns": [
+            {
+              "expression": "accountSubGroupId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "GeneralLedger_agentId_idx": {
+          "name": "GeneralLedger_agentId_idx",
+          "columns": [
+            {
+              "expression": "agentId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "GeneralLedger_companyId_idx": {
+          "name": "GeneralLedger_companyId_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "GeneralLedger_glType_idx": {
+          "name": "GeneralLedger_glType_idx",
+          "columns": [
+            {
+              "expression": "glType",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "enum_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "GeneralLedger_parentId_idx": {
+          "name": "GeneralLedger_parentId_idx",
+          "columns": [
+            {
+              "expression": "parentId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "GeneralLedger_subAreaId_idx": {
+          "name": "GeneralLedger_subAreaId_idx",
+          "columns": [
+            {
+              "expression": "subAreaId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "GeneralLedger_accountSubGroupId_fkey": {
+          "name": "GeneralLedger_accountSubGroupId_fkey",
+          "tableFrom": "GeneralLedger",
+          "tableTo": "AccountSubGroup",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "accountSubGroupId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "GeneralLedger_parentId_fkey": {
+          "name": "GeneralLedger_parentId_fkey",
+          "tableFrom": "GeneralLedger",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "parentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "GeneralLedger_subAreaId_fkey": {
+          "name": "GeneralLedger_subAreaId_fkey",
+          "tableFrom": "GeneralLedger",
+          "tableTo": "SubArea",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "subAreaId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "GeneralLedger_agentId_fkey": {
+          "name": "GeneralLedger_agentId_fkey",
+          "tableFrom": "GeneralLedger",
+          "tableTo": "Agent",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "agentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "GeneralLedger_companyId_fkey": {
+          "name": "GeneralLedger_companyId_fkey",
+          "tableFrom": "GeneralLedger",
+          "tableTo": "Company",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "companyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "GeneralLedger_companyId_code_key": {
+          "columns": [
+            "code",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "GeneralLedger_companyId_code_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.AccountSubGroup": {
+      "name": "AccountSubGroup",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accountGroupId": {
+          "name": "accountGroupId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "AccountSubGroup_accountGroupId_fkey": {
+          "name": "AccountSubGroup_accountGroupId_fkey",
+          "tableFrom": "AccountSubGroup",
+          "tableTo": "AccountGroup",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "accountGroupId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "AccountSubGroup_accountGroupId_code_key": {
+          "columns": [
+            "code",
+            "accountGroupId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "AccountSubGroup_accountGroupId_code_key"
+        },
+        "AccountSubGroup_accountGroupId_description_key": {
+          "columns": [
+            "description",
+            "accountGroupId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "AccountSubGroup_accountGroupId_description_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.SubArea": {
+      "name": "SubArea",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shortName": {
+          "name": "shortName",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "areaId": {
+          "name": "areaId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "SubArea_areaId_fkey": {
+          "name": "SubArea_areaId_fkey",
+          "tableFrom": "SubArea",
+          "tableTo": "Area",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "areaId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "SubArea_areaId_code_key": {
+          "columns": [
+            "code",
+            "areaId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "SubArea_areaId_code_key"
+        },
+        "SubArea_areaId_name_key": {
+          "columns": [
+            "name",
+            "areaId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "SubArea_areaId_name_key"
+        },
+        "SubArea_areaId_shortName_key": {
+          "columns": [
+            "shortName",
+            "areaId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "SubArea_areaId_shortName_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.Agent": {
+      "name": "Agent",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone": {
+          "name": "phone",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "Agent_companyId_idx": {
+          "name": "Agent_companyId_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "Agent_companyId_fkey": {
+          "name": "Agent_companyId_fkey",
+          "tableFrom": "Agent",
+          "tableTo": "Company",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "companyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "Agent_companyId_code_key": {
+          "columns": [
+            "code",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "Agent_companyId_code_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.AccountGroup": {
+      "name": "AccountGroup",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "AccountType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "AccountGroup_companyId_idx": {
+          "name": "AccountGroup_companyId_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "AccountGroup_companyId_fkey": {
+          "name": "AccountGroup_companyId_fkey",
+          "tableFrom": "AccountGroup",
+          "tableTo": "Company",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "companyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "AccountGroup_companyId_code_key": {
+          "columns": [
+            "code",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "AccountGroup_companyId_code_key"
+        },
+        "AccountGroup_companyId_description_key": {
+          "columns": [
+            "description",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "AccountGroup_companyId_description_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.Area": {
+      "name": "Area",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shortName": {
+          "name": "shortName",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "Area_companyId_idx": {
+          "name": "Area_companyId_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "Area_companyId_fkey": {
+          "name": "Area_companyId_fkey",
+          "tableFrom": "Area",
+          "tableTo": "Company",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "companyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "Area_companyId_code_key": {
+          "columns": [
+            "code",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "Area_companyId_code_key"
+        },
+        "Area_companyId_name_key": {
+          "columns": [
+            "name",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "Area_companyId_name_key"
+        },
+        "Area_companyId_shortName_key": {
+          "columns": [
+            "shortName",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "Area_companyId_shortName_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.CustomerDetail": {
+      "name": "CustomerDetail",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "partyId": {
+          "name": "partyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "creditLimit": {
+          "name": "creditLimit",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creditDays": {
+          "name": "creditDays",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "CustomerDetail_partyId_fkey": {
+          "name": "CustomerDetail_partyId_fkey",
+          "tableFrom": "CustomerDetail",
+          "tableTo": "Party",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "partyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "CustomerDetail_partyId_key": {
+          "columns": [
+            "partyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "CustomerDetail_partyId_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.VendorDetail": {
+      "name": "VendorDetail",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "partyId": {
+          "name": "partyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "paymentTermDays": {
+          "name": "paymentTermDays",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "VendorDetail_partyId_fkey": {
+          "name": "VendorDetail_partyId_fkey",
+          "tableFrom": "VendorDetail",
+          "tableTo": "Party",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "partyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "VendorDetail_partyId_key": {
+          "columns": [
+            "partyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "VendorDetail_partyId_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.AuditLog": {
+      "name": "AuditLog",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tableName": {
+          "name": "tableName",
+          "type": "varchar(63)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recordId": {
+          "name": "recordId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action": {
+          "name": "action",
+          "type": "AuditAction",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "oldData": {
+          "name": "oldData",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "newData": {
+          "name": "newData",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "changedBy": {
+          "name": "changedBy",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "changedAt": {
+          "name": "changedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "AuditLog_changedAt_idx": {
+          "name": "AuditLog_changedAt_idx",
+          "columns": [
+            {
+              "expression": "changedAt",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "timestamp_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "AuditLog_tableName_recordId_idx": {
+          "name": "AuditLog_tableName_recordId_idx",
+          "columns": [
+            {
+              "expression": "tableName",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops",
+              "isExpression": false
+            },
+            {
+              "expression": "recordId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "AuditLog_changedBy_fkey": {
+          "name": "AuditLog_changedBy_fkey",
+          "tableFrom": "AuditLog",
+          "tableTo": "User",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "changedBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.JournalVoucher": {
+      "name": "JournalVoucher",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "documentType": {
+          "name": "documentType",
+          "type": "DocumentType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'JOURNAL_VOUCHER'"
+        },
+        "voucherNumber": {
+          "name": "voucherNumber",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "voucherDate": {
+          "name": "voucherDate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fiscalYear": {
+          "name": "fiscalYear",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "remarks": {
+          "name": "remarks",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reversalOfId": {
+          "name": "reversalOfId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isPosted": {
+          "name": "isPosted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "postedAt": {
+          "name": "postedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "postedBy": {
+          "name": "postedBy",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "branchId": {
+          "name": "branchId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "JournalVoucher_branchId_idx": {
+          "name": "JournalVoucher_branchId_idx",
+          "columns": [
+            {
+              "expression": "branchId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "JournalVoucher_companyId_idx": {
+          "name": "JournalVoucher_companyId_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "JournalVoucher_documentType_idx": {
+          "name": "JournalVoucher_documentType_idx",
+          "columns": [
+            {
+              "expression": "documentType",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "enum_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "JournalVoucher_fiscalYear_idx": {
+          "name": "JournalVoucher_fiscalYear_idx",
+          "columns": [
+            {
+              "expression": "fiscalYear",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "JournalVoucher_reversalOfId_fkey": {
+          "name": "JournalVoucher_reversalOfId_fkey",
+          "tableFrom": "JournalVoucher",
+          "tableTo": "JournalVoucher",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "reversalOfId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "JournalVoucher_postedBy_fkey": {
+          "name": "JournalVoucher_postedBy_fkey",
+          "tableFrom": "JournalVoucher",
+          "tableTo": "User",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "postedBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "JournalVoucher_createdBy_fkey": {
+          "name": "JournalVoucher_createdBy_fkey",
+          "tableFrom": "JournalVoucher",
+          "tableTo": "User",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "createdBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "JournalVoucher_companyId_fkey": {
+          "name": "JournalVoucher_companyId_fkey",
+          "tableFrom": "JournalVoucher",
+          "tableTo": "Company",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "companyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "JournalVoucher_branchId_fkey": {
+          "name": "JournalVoucher_branchId_fkey",
+          "tableFrom": "JournalVoucher",
+          "tableTo": "Branch",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "branchId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "JournalVoucher_branchId_voucherNumber_key": {
+          "columns": [
+            "voucherNumber",
+            "branchId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "JournalVoucher_branchId_voucherNumber_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.JournalVoucherLine": {
+      "name": "JournalVoucherLine",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "journalVoucherId": {
+          "name": "journalVoucherId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lineNumber": {
+          "name": "lineNumber",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "generalLedgerId": {
+          "name": "generalLedgerId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "debit": {
+          "name": "debit",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "credit": {
+          "name": "credit",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "narration": {
+          "name": "narration",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "agentId": {
+          "name": "agentId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "JournalVoucherLine_agentId_idx": {
+          "name": "JournalVoucherLine_agentId_idx",
+          "columns": [
+            {
+              "expression": "agentId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "JournalVoucherLine_generalLedgerId_idx": {
+          "name": "JournalVoucherLine_generalLedgerId_idx",
+          "columns": [
+            {
+              "expression": "generalLedgerId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "JournalVoucherLine_journalVoucherId_fkey": {
+          "name": "JournalVoucherLine_journalVoucherId_fkey",
+          "tableFrom": "JournalVoucherLine",
+          "tableTo": "JournalVoucher",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "journalVoucherId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "JournalVoucherLine_generalLedgerId_fkey": {
+          "name": "JournalVoucherLine_generalLedgerId_fkey",
+          "tableFrom": "JournalVoucherLine",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "generalLedgerId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "JournalVoucherLine_agentId_fkey": {
+          "name": "JournalVoucherLine_agentId_fkey",
+          "tableFrom": "JournalVoucherLine",
+          "tableTo": "Agent",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "agentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "JournalVoucherLine_journalVoucherId_lineNumber_key": {
+          "columns": [
+            "journalVoucherId",
+            "lineNumber"
+          ],
+          "nullsNotDistinct": false,
+          "name": "JournalVoucherLine_journalVoucherId_lineNumber_key"
+        }
+      },
+      "checkConstraints": {
+        "JournalVoucherLine_debit_credit_not_both_check": {
+          "name": "JournalVoucherLine_debit_credit_not_both_check",
+          "value": "NOT ((debit > (0)::numeric) AND (credit > (0)::numeric))"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.CashBankVoucher": {
+      "name": "CashBankVoucher",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "documentType": {
+          "name": "documentType",
+          "type": "DocumentType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'CASH_BANK_VOUCHER'"
+        },
+        "voucherNumber": {
+          "name": "voucherNumber",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "voucherDate": {
+          "name": "voucherDate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fiscalYear": {
+          "name": "fiscalYear",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "remarks": {
+          "name": "remarks",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reversalOfId": {
+          "name": "reversalOfId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isPosted": {
+          "name": "isPosted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "postedAt": {
+          "name": "postedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "postedBy": {
+          "name": "postedBy",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "branchId": {
+          "name": "branchId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "CashBankVoucher_branchId_idx": {
+          "name": "CashBankVoucher_branchId_idx",
+          "columns": [
+            {
+              "expression": "branchId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "CashBankVoucher_companyId_idx": {
+          "name": "CashBankVoucher_companyId_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "CashBankVoucher_documentType_idx": {
+          "name": "CashBankVoucher_documentType_idx",
+          "columns": [
+            {
+              "expression": "documentType",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "enum_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "CashBankVoucher_fiscalYear_idx": {
+          "name": "CashBankVoucher_fiscalYear_idx",
+          "columns": [
+            {
+              "expression": "fiscalYear",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "CashBankVoucher_reversalOfId_fkey": {
+          "name": "CashBankVoucher_reversalOfId_fkey",
+          "tableFrom": "CashBankVoucher",
+          "tableTo": "CashBankVoucher",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "reversalOfId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "CashBankVoucher_postedBy_fkey": {
+          "name": "CashBankVoucher_postedBy_fkey",
+          "tableFrom": "CashBankVoucher",
+          "tableTo": "User",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "postedBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "CashBankVoucher_createdBy_fkey": {
+          "name": "CashBankVoucher_createdBy_fkey",
+          "tableFrom": "CashBankVoucher",
+          "tableTo": "User",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "createdBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "CashBankVoucher_companyId_fkey": {
+          "name": "CashBankVoucher_companyId_fkey",
+          "tableFrom": "CashBankVoucher",
+          "tableTo": "Company",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "companyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "CashBankVoucher_branchId_fkey": {
+          "name": "CashBankVoucher_branchId_fkey",
+          "tableFrom": "CashBankVoucher",
+          "tableTo": "Branch",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "branchId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "CashBankVoucher_branchId_voucherNumber_key": {
+          "columns": [
+            "voucherNumber",
+            "branchId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "CashBankVoucher_branchId_voucherNumber_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.User": {
+      "name": "User",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "calendarPreference": {
+          "name": "calendarPreference",
+          "type": "CalendarPreference",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'BS'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "User_email_key": {
+          "columns": [
+            "email"
+          ],
+          "nullsNotDistinct": false,
+          "name": "User_email_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.CashBankVoucherLine": {
+      "name": "CashBankVoucherLine",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "cashBankVoucherId": {
+          "name": "cashBankVoucherId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lineNumber": {
+          "name": "lineNumber",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "generalLedgerId": {
+          "name": "generalLedgerId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "debit": {
+          "name": "debit",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "credit": {
+          "name": "credit",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "narration": {
+          "name": "narration",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instrumentType": {
+          "name": "instrumentType",
+          "type": "InstrumentType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "chequeNumber": {
+          "name": "chequeNumber",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "chequeDate": {
+          "name": "chequeDate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "chequeBankName": {
+          "name": "chequeBankName",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "chequeBankBranch": {
+          "name": "chequeBankBranch",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isCleared": {
+          "name": "isCleared",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "clearedDate": {
+          "name": "clearedDate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "clearedBy": {
+          "name": "clearedBy",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "agentId": {
+          "name": "agentId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "CashBankVoucherLine_agentId_idx": {
+          "name": "CashBankVoucherLine_agentId_idx",
+          "columns": [
+            {
+              "expression": "agentId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "CashBankVoucherLine_chequeNumber_idx": {
+          "name": "CashBankVoucherLine_chequeNumber_idx",
+          "columns": [
+            {
+              "expression": "chequeNumber",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "CashBankVoucherLine_generalLedgerId_idx": {
+          "name": "CashBankVoucherLine_generalLedgerId_idx",
+          "columns": [
+            {
+              "expression": "generalLedgerId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "CashBankVoucherLine_cashBankVoucherId_fkey": {
+          "name": "CashBankVoucherLine_cashBankVoucherId_fkey",
+          "tableFrom": "CashBankVoucherLine",
+          "tableTo": "CashBankVoucher",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "cashBankVoucherId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "CashBankVoucherLine_generalLedgerId_fkey": {
+          "name": "CashBankVoucherLine_generalLedgerId_fkey",
+          "tableFrom": "CashBankVoucherLine",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "generalLedgerId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "CashBankVoucherLine_agentId_fkey": {
+          "name": "CashBankVoucherLine_agentId_fkey",
+          "tableFrom": "CashBankVoucherLine",
+          "tableTo": "Agent",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "agentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "CashBankVoucherLine_clearedBy_fkey": {
+          "name": "CashBankVoucherLine_clearedBy_fkey",
+          "tableFrom": "CashBankVoucherLine",
+          "tableTo": "User",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "clearedBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "CashBankVoucherLine_cashBankVoucherId_lineNumber_key": {
+          "columns": [
+            "cashBankVoucherId",
+            "lineNumber"
+          ],
+          "nullsNotDistinct": false,
+          "name": "CashBankVoucherLine_cashBankVoucherId_lineNumber_key"
+        }
+      },
+      "checkConstraints": {
+        "CashBankVoucherLine_debit_credit_not_both_check": {
+          "name": "CashBankVoucherLine_debit_credit_not_both_check",
+          "value": "NOT ((debit > (0)::numeric) AND (credit > (0)::numeric))"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.ProductUnit": {
+      "name": "ProductUnit",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "decimalPlaces": {
+          "name": "decimalPlaces",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ProductUnit_companyId_idx": {
+          "name": "ProductUnit_companyId_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "ProductUnit_companyId_fkey": {
+          "name": "ProductUnit_companyId_fkey",
+          "tableFrom": "ProductUnit",
+          "tableTo": "Company",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "companyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "ProductUnit_companyId_code_key": {
+          "columns": [
+            "code",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "ProductUnit_companyId_code_key"
+        },
+        "ProductUnit_companyId_name_key": {
+          "columns": [
+            "name",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "ProductUnit_companyId_name_key"
+        }
+      },
+      "checkConstraints": {
+        "ProductUnit_decimalPlaces_check": {
+          "name": "ProductUnit_decimalPlaces_check",
+          "value": "(\"decimalPlaces\" >= 0) AND (\"decimalPlaces\" <= 6)"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.Location": {
+      "name": "Location",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parentId": {
+          "name": "parentId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "Location_companyId_idx": {
+          "name": "Location_companyId_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "Location_parentId_idx": {
+          "name": "Location_parentId_idx",
+          "columns": [
+            {
+              "expression": "parentId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "Location_parentId_fkey": {
+          "name": "Location_parentId_fkey",
+          "tableFrom": "Location",
+          "tableTo": "Location",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "parentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "Location_companyId_fkey": {
+          "name": "Location_companyId_fkey",
+          "tableFrom": "Location",
+          "tableTo": "Company",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "companyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "Location_companyId_code_key": {
+          "columns": [
+            "code",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "Location_companyId_code_key"
+        }
+      },
+      "checkConstraints": {
+        "Location_no_self_parent_check": {
+          "name": "Location_no_self_parent_check",
+          "value": "(\"parentId\" IS NULL) OR (\"parentId\" <> id)"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.SubLedger": {
+      "name": "SubLedger",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "generalLedgerId": {
+          "name": "generalLedgerId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "partyId": {
+          "name": "partyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "SubLedger_generalLedgerId_idx": {
+          "name": "SubLedger_generalLedgerId_idx",
+          "columns": [
+            {
+              "expression": "generalLedgerId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "SubLedger_partyId_idx": {
+          "name": "SubLedger_partyId_idx",
+          "columns": [
+            {
+              "expression": "partyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "SubLedger_generalLedgerId_fkey": {
+          "name": "SubLedger_generalLedgerId_fkey",
+          "tableFrom": "SubLedger",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "generalLedgerId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "SubLedger_partyId_fkey": {
+          "name": "SubLedger_partyId_fkey",
+          "tableFrom": "SubLedger",
+          "tableTo": "Party",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "partyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "SubLedger_code_key": {
+          "columns": [
+            "code"
+          ],
+          "nullsNotDistinct": false,
+          "name": "SubLedger_code_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.ProductSubGroup": {
+      "name": "ProductSubGroup",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "productGroupId": {
+          "name": "productGroupId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "ProductSubGroup_productGroupId_fkey": {
+          "name": "ProductSubGroup_productGroupId_fkey",
+          "tableFrom": "ProductSubGroup",
+          "tableTo": "ProductGroup",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "productGroupId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "ProductSubGroup_productGroupId_code_key": {
+          "columns": [
+            "code",
+            "productGroupId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "ProductSubGroup_productGroupId_code_key"
+        },
+        "ProductSubGroup_productGroupId_name_key": {
+          "columns": [
+            "name",
+            "productGroupId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "ProductSubGroup_productGroupId_name_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.Product": {
+      "name": "Product",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shortName": {
+          "name": "shortName",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "barcode": {
+          "name": "barcode",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "ProductType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "productSubGroupId": {
+          "name": "productSubGroupId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "Product_companyId_idx": {
+          "name": "Product_companyId_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "Product_description_idx": {
+          "name": "Product_description_idx",
+          "columns": [
+            {
+              "expression": "description",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "Product_productSubGroupId_idx": {
+          "name": "Product_productSubGroupId_idx",
+          "columns": [
+            {
+              "expression": "productSubGroupId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "Product_type_idx": {
+          "name": "Product_type_idx",
+          "columns": [
+            {
+              "expression": "type",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "enum_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "Product_type_isActive_idx": {
+          "name": "Product_type_isActive_idx",
+          "columns": [
+            {
+              "expression": "type",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "enum_ops",
+              "isExpression": false
+            },
+            {
+              "expression": "isActive",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "bool_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "Product_productSubGroupId_fkey": {
+          "name": "Product_productSubGroupId_fkey",
+          "tableFrom": "Product",
+          "tableTo": "ProductSubGroup",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "productSubGroupId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "Product_companyId_fkey": {
+          "name": "Product_companyId_fkey",
+          "tableFrom": "Product",
+          "tableTo": "Company",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "companyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "Product_companyId_code_key": {
+          "columns": [
+            "code",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "Product_companyId_code_key"
+        },
+        "Product_companyId_barcode_key": {
+          "columns": [
+            "barcode",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "Product_companyId_barcode_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.StockDetail": {
+      "name": "StockDetail",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "productId": {
+          "name": "productId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "baseUnitId": {
+          "name": "baseUnitId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stockCategoryId": {
+          "name": "stockCategoryId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "defaultLocationId": {
+          "name": "defaultLocationId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "taxRateId": {
+          "name": "taxRateId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "valuationMethod": {
+          "name": "valuationMethod",
+          "type": "ValuationMethod",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'WEIGHTED_AVERAGE'"
+        },
+        "tracksBatch": {
+          "name": "tracksBatch",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "tracksExpiry": {
+          "name": "tracksExpiry",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "purchaseRate": {
+          "name": "purchaseRate",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "salesRate": {
+          "name": "salesRate",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mrp": {
+          "name": "mrp",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tradePrice": {
+          "name": "tradePrice",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "minStock": {
+          "name": "minStock",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "maxStock": {
+          "name": "maxStock",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reorderLevel": {
+          "name": "reorderLevel",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reorderQty": {
+          "name": "reorderQty",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "openingGLId": {
+          "name": "openingGLId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "closingPLGLId": {
+          "name": "closingPLGLId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "closingBSGLId": {
+          "name": "closingBSGLId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "purchaseGLId": {
+          "name": "purchaseGLId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "purchaseReturnGLId": {
+          "name": "purchaseReturnGLId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "salesGLId": {
+          "name": "salesGLId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "salesReturnGLId": {
+          "name": "salesReturnGLId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "defaultVendorId": {
+          "name": "defaultVendorId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "StockDetail_baseUnitId_idx": {
+          "name": "StockDetail_baseUnitId_idx",
+          "columns": [
+            {
+              "expression": "baseUnitId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "StockDetail_closingBSGLId_idx": {
+          "name": "StockDetail_closingBSGLId_idx",
+          "columns": [
+            {
+              "expression": "closingBSGLId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "StockDetail_closingPLGLId_idx": {
+          "name": "StockDetail_closingPLGLId_idx",
+          "columns": [
+            {
+              "expression": "closingPLGLId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "StockDetail_defaultLocationId_idx": {
+          "name": "StockDetail_defaultLocationId_idx",
+          "columns": [
+            {
+              "expression": "defaultLocationId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "StockDetail_defaultVendorId_idx": {
+          "name": "StockDetail_defaultVendorId_idx",
+          "columns": [
+            {
+              "expression": "defaultVendorId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "StockDetail_openingGLId_idx": {
+          "name": "StockDetail_openingGLId_idx",
+          "columns": [
+            {
+              "expression": "openingGLId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "StockDetail_purchaseGLId_idx": {
+          "name": "StockDetail_purchaseGLId_idx",
+          "columns": [
+            {
+              "expression": "purchaseGLId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "StockDetail_purchaseReturnGLId_idx": {
+          "name": "StockDetail_purchaseReturnGLId_idx",
+          "columns": [
+            {
+              "expression": "purchaseReturnGLId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "StockDetail_salesGLId_idx": {
+          "name": "StockDetail_salesGLId_idx",
+          "columns": [
+            {
+              "expression": "salesGLId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "StockDetail_salesReturnGLId_idx": {
+          "name": "StockDetail_salesReturnGLId_idx",
+          "columns": [
+            {
+              "expression": "salesReturnGLId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "StockDetail_stockCategoryId_idx": {
+          "name": "StockDetail_stockCategoryId_idx",
+          "columns": [
+            {
+              "expression": "stockCategoryId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "StockDetail_taxRateId_idx": {
+          "name": "StockDetail_taxRateId_idx",
+          "columns": [
+            {
+              "expression": "taxRateId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "StockDetail_closingPLGLId_fkey": {
+          "name": "StockDetail_closingPLGLId_fkey",
+          "tableFrom": "StockDetail",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "closingPLGLId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "StockDetail_closingBSGLId_fkey": {
+          "name": "StockDetail_closingBSGLId_fkey",
+          "tableFrom": "StockDetail",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "closingBSGLId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "StockDetail_purchaseGLId_fkey": {
+          "name": "StockDetail_purchaseGLId_fkey",
+          "tableFrom": "StockDetail",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "purchaseGLId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "StockDetail_purchaseReturnGLId_fkey": {
+          "name": "StockDetail_purchaseReturnGLId_fkey",
+          "tableFrom": "StockDetail",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "purchaseReturnGLId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "StockDetail_productId_fkey": {
+          "name": "StockDetail_productId_fkey",
+          "tableFrom": "StockDetail",
+          "tableTo": "Product",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "productId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "StockDetail_baseUnitId_fkey": {
+          "name": "StockDetail_baseUnitId_fkey",
+          "tableFrom": "StockDetail",
+          "tableTo": "ProductUnit",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "baseUnitId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "StockDetail_stockCategoryId_fkey": {
+          "name": "StockDetail_stockCategoryId_fkey",
+          "tableFrom": "StockDetail",
+          "tableTo": "StockCategory",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "stockCategoryId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "StockDetail_defaultLocationId_fkey": {
+          "name": "StockDetail_defaultLocationId_fkey",
+          "tableFrom": "StockDetail",
+          "tableTo": "Location",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "defaultLocationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "StockDetail_taxRateId_fkey": {
+          "name": "StockDetail_taxRateId_fkey",
+          "tableFrom": "StockDetail",
+          "tableTo": "TaxRate",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "taxRateId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "StockDetail_openingGLId_fkey": {
+          "name": "StockDetail_openingGLId_fkey",
+          "tableFrom": "StockDetail",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "openingGLId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "StockDetail_salesGLId_fkey": {
+          "name": "StockDetail_salesGLId_fkey",
+          "tableFrom": "StockDetail",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "salesGLId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "StockDetail_salesReturnGLId_fkey": {
+          "name": "StockDetail_salesReturnGLId_fkey",
+          "tableFrom": "StockDetail",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "salesReturnGLId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "StockDetail_defaultVendorId_fkey": {
+          "name": "StockDetail_defaultVendorId_fkey",
+          "tableFrom": "StockDetail",
+          "tableTo": "Party",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "defaultVendorId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "StockDetail_productId_key": {
+          "columns": [
+            "productId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "StockDetail_productId_key"
+        }
+      },
+      "checkConstraints": {
+        "StockDetail_purchaseRate_check": {
+          "name": "StockDetail_purchaseRate_check",
+          "value": "(\"purchaseRate\" IS NULL) OR (\"purchaseRate\" >= (0)::numeric)"
+        },
+        "StockDetail_salesRate_check": {
+          "name": "StockDetail_salesRate_check",
+          "value": "(\"salesRate\" IS NULL) OR (\"salesRate\" >= (0)::numeric)"
+        },
+        "StockDetail_mrp_check": {
+          "name": "StockDetail_mrp_check",
+          "value": "(mrp IS NULL) OR (mrp >= (0)::numeric)"
+        },
+        "StockDetail_tradePrice_check": {
+          "name": "StockDetail_tradePrice_check",
+          "value": "(\"tradePrice\" IS NULL) OR (\"tradePrice\" >= (0)::numeric)"
+        },
+        "StockDetail_minStock_check": {
+          "name": "StockDetail_minStock_check",
+          "value": "(\"minStock\" IS NULL) OR (\"minStock\" >= (0)::numeric)"
+        },
+        "StockDetail_maxStock_check": {
+          "name": "StockDetail_maxStock_check",
+          "value": "(\"maxStock\" IS NULL) OR (\"maxStock\" >= (0)::numeric)"
+        },
+        "StockDetail_reorderLevel_check": {
+          "name": "StockDetail_reorderLevel_check",
+          "value": "(\"reorderLevel\" IS NULL) OR (\"reorderLevel\" >= (0)::numeric)"
+        },
+        "StockDetail_reorderQty_check": {
+          "name": "StockDetail_reorderQty_check",
+          "value": "(\"reorderQty\" IS NULL) OR (\"reorderQty\" >= (0)::numeric)"
+        },
+        "StockDetail_min_le_max_stock_check": {
+          "name": "StockDetail_min_le_max_stock_check",
+          "value": "(\"minStock\" IS NULL) OR (\"maxStock\" IS NULL) OR (\"minStock\" <= \"maxStock\")"
+        },
+        "StockDetail_reorder_le_max_stock_check": {
+          "name": "StockDetail_reorder_le_max_stock_check",
+          "value": "(\"reorderLevel\" IS NULL) OR (\"maxStock\" IS NULL) OR (\"reorderLevel\" <= \"maxStock\")"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.ServiceDetail": {
+      "name": "ServiceDetail",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "productId": {
+          "name": "productId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unitId": {
+          "name": "unitId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "taxRateId": {
+          "name": "taxRateId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "salesGLId": {
+          "name": "salesGLId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "purchaseGLId": {
+          "name": "purchaseGLId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ServiceDetail_purchaseGLId_idx": {
+          "name": "ServiceDetail_purchaseGLId_idx",
+          "columns": [
+            {
+              "expression": "purchaseGLId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ServiceDetail_salesGLId_idx": {
+          "name": "ServiceDetail_salesGLId_idx",
+          "columns": [
+            {
+              "expression": "salesGLId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ServiceDetail_taxRateId_idx": {
+          "name": "ServiceDetail_taxRateId_idx",
+          "columns": [
+            {
+              "expression": "taxRateId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ServiceDetail_unitId_idx": {
+          "name": "ServiceDetail_unitId_idx",
+          "columns": [
+            {
+              "expression": "unitId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "ServiceDetail_productId_fkey": {
+          "name": "ServiceDetail_productId_fkey",
+          "tableFrom": "ServiceDetail",
+          "tableTo": "Product",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "productId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "ServiceDetail_unitId_fkey": {
+          "name": "ServiceDetail_unitId_fkey",
+          "tableFrom": "ServiceDetail",
+          "tableTo": "ProductUnit",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "unitId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "ServiceDetail_taxRateId_fkey": {
+          "name": "ServiceDetail_taxRateId_fkey",
+          "tableFrom": "ServiceDetail",
+          "tableTo": "TaxRate",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "taxRateId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "ServiceDetail_salesGLId_fkey": {
+          "name": "ServiceDetail_salesGLId_fkey",
+          "tableFrom": "ServiceDetail",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "salesGLId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "ServiceDetail_purchaseGLId_fkey": {
+          "name": "ServiceDetail_purchaseGLId_fkey",
+          "tableFrom": "ServiceDetail",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "purchaseGLId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "ServiceDetail_productId_key": {
+          "columns": [
+            "productId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "ServiceDetail_productId_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.AlternateUnit": {
+      "name": "AlternateUnit",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "stockDetailId": {
+          "name": "stockDetailId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unitId": {
+          "name": "unitId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "conversionFactor": {
+          "name": "conversionFactor",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "AlternateUnit_unitId_idx": {
+          "name": "AlternateUnit_unitId_idx",
+          "columns": [
+            {
+              "expression": "unitId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "AlternateUnit_stockDetailId_fkey": {
+          "name": "AlternateUnit_stockDetailId_fkey",
+          "tableFrom": "AlternateUnit",
+          "tableTo": "StockDetail",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "stockDetailId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "AlternateUnit_unitId_fkey": {
+          "name": "AlternateUnit_unitId_fkey",
+          "tableFrom": "AlternateUnit",
+          "tableTo": "ProductUnit",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "unitId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "AlternateUnit_stockDetailId_unitId_key": {
+          "columns": [
+            "stockDetailId",
+            "unitId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "AlternateUnit_stockDetailId_unitId_key"
+        }
+      },
+      "checkConstraints": {
+        "AlternateUnit_conversionFactor_check": {
+          "name": "AlternateUnit_conversionFactor_check",
+          "value": "\"conversionFactor\" > (0)::numeric"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.NonStockDetail": {
+      "name": "NonStockDetail",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "productId": {
+          "name": "productId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unitId": {
+          "name": "unitId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "taxRateId": {
+          "name": "taxRateId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "salesGLId": {
+          "name": "salesGLId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "purchaseGLId": {
+          "name": "purchaseGLId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "NonStockDetail_purchaseGLId_idx": {
+          "name": "NonStockDetail_purchaseGLId_idx",
+          "columns": [
+            {
+              "expression": "purchaseGLId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "NonStockDetail_salesGLId_idx": {
+          "name": "NonStockDetail_salesGLId_idx",
+          "columns": [
+            {
+              "expression": "salesGLId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "NonStockDetail_taxRateId_idx": {
+          "name": "NonStockDetail_taxRateId_idx",
+          "columns": [
+            {
+              "expression": "taxRateId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "NonStockDetail_unitId_idx": {
+          "name": "NonStockDetail_unitId_idx",
+          "columns": [
+            {
+              "expression": "unitId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "NonStockDetail_productId_fkey": {
+          "name": "NonStockDetail_productId_fkey",
+          "tableFrom": "NonStockDetail",
+          "tableTo": "Product",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "productId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "NonStockDetail_unitId_fkey": {
+          "name": "NonStockDetail_unitId_fkey",
+          "tableFrom": "NonStockDetail",
+          "tableTo": "ProductUnit",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "unitId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "NonStockDetail_taxRateId_fkey": {
+          "name": "NonStockDetail_taxRateId_fkey",
+          "tableFrom": "NonStockDetail",
+          "tableTo": "TaxRate",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "taxRateId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "NonStockDetail_salesGLId_fkey": {
+          "name": "NonStockDetail_salesGLId_fkey",
+          "tableFrom": "NonStockDetail",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "salesGLId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "NonStockDetail_purchaseGLId_fkey": {
+          "name": "NonStockDetail_purchaseGLId_fkey",
+          "tableFrom": "NonStockDetail",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "purchaseGLId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "NonStockDetail_productId_key": {
+          "columns": [
+            "productId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "NonStockDetail_productId_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.TaxRate": {
+      "name": "TaxRate",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ratePercent": {
+          "name": "ratePercent",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hsnSacCode": {
+          "name": "hsnSacCode",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "TaxRate_companyId_idx": {
+          "name": "TaxRate_companyId_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "TaxRate_companyId_fkey": {
+          "name": "TaxRate_companyId_fkey",
+          "tableFrom": "TaxRate",
+          "tableTo": "Company",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "companyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "TaxRate_companyId_code_key": {
+          "columns": [
+            "code",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "TaxRate_companyId_code_key"
+        }
+      },
+      "checkConstraints": {
+        "TaxRate_ratePercent_check": {
+          "name": "TaxRate_ratePercent_check",
+          "value": "(\"ratePercent\" >= (0)::numeric) AND (\"ratePercent\" <= (100)::numeric)"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.StockCategory": {
+      "name": "StockCategory",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "StockCategory_companyId_idx": {
+          "name": "StockCategory_companyId_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "StockCategory_companyId_fkey": {
+          "name": "StockCategory_companyId_fkey",
+          "tableFrom": "StockCategory",
+          "tableTo": "Company",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "companyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "StockCategory_companyId_code_key": {
+          "columns": [
+            "code",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "StockCategory_companyId_code_key"
+        },
+        "StockCategory_companyId_name_key": {
+          "columns": [
+            "name",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "StockCategory_companyId_name_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.FixedAssetDetail": {
+      "name": "FixedAssetDetail",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "productId": {
+          "name": "productId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "assetGLId": {
+          "name": "assetGLId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accumulatedDeprGLId": {
+          "name": "accumulatedDeprGLId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "depreciationExpenseGLId": {
+          "name": "depreciationExpenseGLId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locationId": {
+          "name": "locationId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "purchaseDate": {
+          "name": "purchaseDate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "originalCost": {
+          "name": "originalCost",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "salvageValue": {
+          "name": "salvageValue",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "usefulLifeYears": {
+          "name": "usefulLifeYears",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "depreciationMethod": {
+          "name": "depreciationMethod",
+          "type": "DepreciationMethod",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'STRAIGHT_LINE'"
+        },
+        "depreciationRatePercent": {
+          "name": "depreciationRatePercent",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "accumulatedDepreciation": {
+          "name": "accumulatedDepreciation",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "FixedAssetDetail_accumulatedDeprGLId_idx": {
+          "name": "FixedAssetDetail_accumulatedDeprGLId_idx",
+          "columns": [
+            {
+              "expression": "accumulatedDeprGLId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "FixedAssetDetail_assetGLId_idx": {
+          "name": "FixedAssetDetail_assetGLId_idx",
+          "columns": [
+            {
+              "expression": "assetGLId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "FixedAssetDetail_depreciationExpenseGLId_idx": {
+          "name": "FixedAssetDetail_depreciationExpenseGLId_idx",
+          "columns": [
+            {
+              "expression": "depreciationExpenseGLId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "FixedAssetDetail_locationId_idx": {
+          "name": "FixedAssetDetail_locationId_idx",
+          "columns": [
+            {
+              "expression": "locationId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "FixedAssetDetail_productId_fkey": {
+          "name": "FixedAssetDetail_productId_fkey",
+          "tableFrom": "FixedAssetDetail",
+          "tableTo": "Product",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "productId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "FixedAssetDetail_assetGLId_fkey": {
+          "name": "FixedAssetDetail_assetGLId_fkey",
+          "tableFrom": "FixedAssetDetail",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "assetGLId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "FixedAssetDetail_accumulatedDeprGLId_fkey": {
+          "name": "FixedAssetDetail_accumulatedDeprGLId_fkey",
+          "tableFrom": "FixedAssetDetail",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "accumulatedDeprGLId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "FixedAssetDetail_depreciationExpenseGLId_fkey": {
+          "name": "FixedAssetDetail_depreciationExpenseGLId_fkey",
+          "tableFrom": "FixedAssetDetail",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "depreciationExpenseGLId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "FixedAssetDetail_locationId_fkey": {
+          "name": "FixedAssetDetail_locationId_fkey",
+          "tableFrom": "FixedAssetDetail",
+          "tableTo": "Location",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "locationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "FixedAssetDetail_productId_key": {
+          "columns": [
+            "productId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "FixedAssetDetail_productId_key"
+        }
+      },
+      "checkConstraints": {
+        "FixedAssetDetail_originalCost_check": {
+          "name": "FixedAssetDetail_originalCost_check",
+          "value": "(\"originalCost\" IS NULL) OR (\"originalCost\" >= (0)::numeric)"
+        },
+        "FixedAssetDetail_salvageValue_check": {
+          "name": "FixedAssetDetail_salvageValue_check",
+          "value": "\"salvageValue\" >= (0)::numeric"
+        },
+        "FixedAssetDetail_salvage_le_cost_check": {
+          "name": "FixedAssetDetail_salvage_le_cost_check",
+          "value": "(\"originalCost\" IS NULL) OR (\"salvageValue\" <= \"originalCost\")"
+        },
+        "FixedAssetDetail_usefulLifeYears_check": {
+          "name": "FixedAssetDetail_usefulLifeYears_check",
+          "value": "(\"usefulLifeYears\" IS NULL) OR (\"usefulLifeYears\" > 0)"
+        },
+        "FixedAssetDetail_depreciationRatePercent_check": {
+          "name": "FixedAssetDetail_depreciationRatePercent_check",
+          "value": "(\"depreciationRatePercent\" IS NULL) OR ((\"depreciationRatePercent\" >= (0)::numeric) AND (\"depreciationRatePercent\" <= (100)::numeric))"
+        },
+        "FixedAssetDetail_accumulatedDepreciation_check": {
+          "name": "FixedAssetDetail_accumulatedDepreciation_check",
+          "value": "\"accumulatedDepreciation\" >= (0)::numeric"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.BundleDetail": {
+      "name": "BundleDetail",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "productId": {
+          "name": "productId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "salesGLId": {
+          "name": "salesGLId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bundlePrice": {
+          "name": "bundlePrice",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "BundleDetail_salesGLId_idx": {
+          "name": "BundleDetail_salesGLId_idx",
+          "columns": [
+            {
+              "expression": "salesGLId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "BundleDetail_productId_fkey": {
+          "name": "BundleDetail_productId_fkey",
+          "tableFrom": "BundleDetail",
+          "tableTo": "Product",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "productId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "BundleDetail_salesGLId_fkey": {
+          "name": "BundleDetail_salesGLId_fkey",
+          "tableFrom": "BundleDetail",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "salesGLId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "BundleDetail_productId_key": {
+          "columns": [
+            "productId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "BundleDetail_productId_key"
+        }
+      },
+      "checkConstraints": {
+        "BundleDetail_bundlePrice_check": {
+          "name": "BundleDetail_bundlePrice_check",
+          "value": "(\"bundlePrice\" IS NULL) OR (\"bundlePrice\" >= (0)::numeric)"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.BundleComponent": {
+      "name": "BundleComponent",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "bundleDetailId": {
+          "name": "bundleDetailId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "componentProductId": {
+          "name": "componentProductId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "BundleComponent_componentProductId_idx": {
+          "name": "BundleComponent_componentProductId_idx",
+          "columns": [
+            {
+              "expression": "componentProductId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "BundleComponent_bundleDetailId_fkey": {
+          "name": "BundleComponent_bundleDetailId_fkey",
+          "tableFrom": "BundleComponent",
+          "tableTo": "BundleDetail",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "bundleDetailId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "BundleComponent_componentProductId_fkey": {
+          "name": "BundleComponent_componentProductId_fkey",
+          "tableFrom": "BundleComponent",
+          "tableTo": "Product",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "componentProductId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "BundleComponent_bundleDetailId_componentProductId_key": {
+          "columns": [
+            "bundleDetailId",
+            "componentProductId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "BundleComponent_bundleDetailId_componentProductId_key"
+        }
+      },
+      "checkConstraints": {
+        "BundleComponent_quantity_check": {
+          "name": "BundleComponent_quantity_check",
+          "value": "quantity > (0)::numeric"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.FiscalYear": {
+      "name": "FiscalYear",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "startDate": {
+          "name": "startDate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "endDate": {
+          "name": "endDate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isCurrent": {
+          "name": "isCurrent",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "isClosed": {
+          "name": "isClosed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "closedAt": {
+          "name": "closedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "closedBy": {
+          "name": "closedBy",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isOpeningBalanceLocked": {
+          "name": "isOpeningBalanceLocked",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "openingBalanceLockedAt": {
+          "name": "openingBalanceLockedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "openingBalanceLockedBy": {
+          "name": "openingBalanceLockedBy",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "FiscalYear_companyId_idx": {
+          "name": "FiscalYear_companyId_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "FiscalYear_companyId_isCurrent_idx": {
+          "name": "FiscalYear_companyId_isCurrent_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "bool_ops",
+              "isExpression": false
+            },
+            {
+              "expression": "isCurrent",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "bool_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "FiscalYear_isClosed_idx": {
+          "name": "FiscalYear_isClosed_idx",
+          "columns": [
+            {
+              "expression": "isClosed",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "bool_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "FiscalYear_only_one_current_per_company": {
+          "name": "FiscalYear_only_one_current_per_company",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "where": "(\"isCurrent\" = true)",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "FiscalYear_closedBy_fkey": {
+          "name": "FiscalYear_closedBy_fkey",
+          "tableFrom": "FiscalYear",
+          "tableTo": "User",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "closedBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "FiscalYear_openingBalanceLockedBy_fkey": {
+          "name": "FiscalYear_openingBalanceLockedBy_fkey",
+          "tableFrom": "FiscalYear",
+          "tableTo": "User",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "openingBalanceLockedBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "FiscalYear_companyId_fkey": {
+          "name": "FiscalYear_companyId_fkey",
+          "tableFrom": "FiscalYear",
+          "tableTo": "Company",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "companyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "FiscalYear_companyId_code_key": {
+          "columns": [
+            "code",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "FiscalYear_companyId_code_key"
+        }
+      },
+      "checkConstraints": {
+        "FiscalYear_dateRange_check": {
+          "name": "FiscalYear_dateRange_check",
+          "value": "\"endDate\" > \"startDate\""
+        },
+        "FiscalYear_closedNotCurrent_check": {
+          "name": "FiscalYear_closedNotCurrent_check",
+          "value": "NOT ((\"isCurrent\" = true) AND (\"isClosed\" = true))"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.StockOpeningBalance": {
+      "name": "StockOpeningBalance",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "fiscalYearId": {
+          "name": "fiscalYearId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stockDetailId": {
+          "name": "stockDetailId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locationId": {
+          "name": "locationId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "batchNo": {
+          "name": "batchNo",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expiryDate": {
+          "name": "expiryDate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rate": {
+          "name": "rate",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "carriedForwardFromId": {
+          "name": "carriedForwardFromId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "branchId": {
+          "name": "branchId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "StockOpeningBalance_branchId_idx": {
+          "name": "StockOpeningBalance_branchId_idx",
+          "columns": [
+            {
+              "expression": "branchId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "StockOpeningBalance_fiscalYearId_branchId_stockDetailId_idx": {
+          "name": "StockOpeningBalance_fiscalYearId_branchId_stockDetailId_idx",
+          "columns": [
+            {
+              "expression": "fiscalYearId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            },
+            {
+              "expression": "branchId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            },
+            {
+              "expression": "stockDetailId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "StockOpeningBalance_stockDetailId_idx": {
+          "name": "StockOpeningBalance_stockDetailId_idx",
+          "columns": [
+            {
+              "expression": "stockDetailId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "StockOpeningBalance_fiscalYearId_fkey": {
+          "name": "StockOpeningBalance_fiscalYearId_fkey",
+          "tableFrom": "StockOpeningBalance",
+          "tableTo": "FiscalYear",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "fiscalYearId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "StockOpeningBalance_stockDetailId_fkey": {
+          "name": "StockOpeningBalance_stockDetailId_fkey",
+          "tableFrom": "StockOpeningBalance",
+          "tableTo": "StockDetail",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "stockDetailId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "StockOpeningBalance_locationId_fkey": {
+          "name": "StockOpeningBalance_locationId_fkey",
+          "tableFrom": "StockOpeningBalance",
+          "tableTo": "Location",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "locationId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "StockOpeningBalance_carriedForwardFromId_fkey": {
+          "name": "StockOpeningBalance_carriedForwardFromId_fkey",
+          "tableFrom": "StockOpeningBalance",
+          "tableTo": "StockOpeningBalance",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "carriedForwardFromId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "StockOpeningBalance_branchId_fkey": {
+          "name": "StockOpeningBalance_branchId_fkey",
+          "tableFrom": "StockOpeningBalance",
+          "tableTo": "Branch",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "branchId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "StockOpeningBalance_quantity_nonneg_check": {
+          "name": "StockOpeningBalance_quantity_nonneg_check",
+          "value": "quantity >= (0)::numeric"
+        },
+        "StockOpeningBalance_rate_nonneg_check": {
+          "name": "StockOpeningBalance_rate_nonneg_check",
+          "value": "rate >= (0)::numeric"
+        },
+        "StockOpeningBalance_value_nonneg_check": {
+          "name": "StockOpeningBalance_value_nonneg_check",
+          "value": "value >= (0)::numeric"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.OpeningBalance": {
+      "name": "OpeningBalance",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "fiscalYearId": {
+          "name": "fiscalYearId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "generalLedgerId": {
+          "name": "generalLedgerId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subLedgerId": {
+          "name": "subLedgerId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "debit": {
+          "name": "debit",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "credit": {
+          "name": "credit",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "remarks": {
+          "name": "remarks",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "carriedForwardFromId": {
+          "name": "carriedForwardFromId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdBy": {
+          "name": "createdBy",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "branchId": {
+          "name": "branchId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "OpeningBalance_branchId_idx": {
+          "name": "OpeningBalance_branchId_idx",
+          "columns": [
+            {
+              "expression": "branchId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "OpeningBalance_companyId_idx": {
+          "name": "OpeningBalance_companyId_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "OpeningBalance_fiscalYearId_branchId_generalLedgerId_subLed_idx": {
+          "name": "OpeningBalance_fiscalYearId_branchId_generalLedgerId_subLed_idx",
+          "columns": [
+            {
+              "expression": "fiscalYearId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            },
+            {
+              "expression": "branchId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            },
+            {
+              "expression": "generalLedgerId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            },
+            {
+              "expression": "subLedgerId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "OpeningBalance_fy_branch_gl_nosubledger_key": {
+          "name": "OpeningBalance_fy_branch_gl_nosubledger_key",
+          "columns": [
+            {
+              "expression": "fiscalYearId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            },
+            {
+              "expression": "branchId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            },
+            {
+              "expression": "generalLedgerId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "where": "(\"subLedgerId\" IS NULL)",
+          "with": {}
+        },
+        "OpeningBalance_fy_branch_gl_subledger_key": {
+          "name": "OpeningBalance_fy_branch_gl_subledger_key",
+          "columns": [
+            {
+              "expression": "fiscalYearId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            },
+            {
+              "expression": "branchId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            },
+            {
+              "expression": "generalLedgerId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            },
+            {
+              "expression": "subLedgerId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "where": "(\"subLedgerId\" IS NOT NULL)",
+          "with": {}
+        },
+        "OpeningBalance_generalLedgerId_idx": {
+          "name": "OpeningBalance_generalLedgerId_idx",
+          "columns": [
+            {
+              "expression": "generalLedgerId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "OpeningBalance_subLedgerId_idx": {
+          "name": "OpeningBalance_subLedgerId_idx",
+          "columns": [
+            {
+              "expression": "subLedgerId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "OpeningBalance_fiscalYearId_fkey": {
+          "name": "OpeningBalance_fiscalYearId_fkey",
+          "tableFrom": "OpeningBalance",
+          "tableTo": "FiscalYear",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "fiscalYearId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "OpeningBalance_generalLedgerId_fkey": {
+          "name": "OpeningBalance_generalLedgerId_fkey",
+          "tableFrom": "OpeningBalance",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "generalLedgerId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "OpeningBalance_subLedgerId_fkey": {
+          "name": "OpeningBalance_subLedgerId_fkey",
+          "tableFrom": "OpeningBalance",
+          "tableTo": "SubLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "subLedgerId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "OpeningBalance_carriedForwardFromId_fkey": {
+          "name": "OpeningBalance_carriedForwardFromId_fkey",
+          "tableFrom": "OpeningBalance",
+          "tableTo": "OpeningBalance",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "carriedForwardFromId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "OpeningBalance_createdBy_fkey": {
+          "name": "OpeningBalance_createdBy_fkey",
+          "tableFrom": "OpeningBalance",
+          "tableTo": "User",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "createdBy"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "OpeningBalance_companyId_fkey": {
+          "name": "OpeningBalance_companyId_fkey",
+          "tableFrom": "OpeningBalance",
+          "tableTo": "Company",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "companyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "OpeningBalance_branchId_fkey": {
+          "name": "OpeningBalance_branchId_fkey",
+          "tableFrom": "OpeningBalance",
+          "tableTo": "Branch",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "branchId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "OpeningBalance_debit_nonneg_check": {
+          "name": "OpeningBalance_debit_nonneg_check",
+          "value": "debit >= (0)::numeric"
+        },
+        "OpeningBalance_credit_nonneg_check": {
+          "name": "OpeningBalance_credit_nonneg_check",
+          "value": "credit >= (0)::numeric"
+        },
+        "OpeningBalance_debit_credit_not_both_check": {
+          "name": "OpeningBalance_debit_credit_not_both_check",
+          "value": "NOT ((debit > (0)::numeric) AND (credit > (0)::numeric))"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.Party": {
+      "name": "Party",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "generalLedgerId": {
+          "name": "generalLedgerId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address": {
+          "name": "address",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "city": {
+          "name": "city",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state": {
+          "name": "state",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "country": {
+          "name": "country",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mobile": {
+          "name": "mobile",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contactPerson": {
+          "name": "contactPerson",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "panNo": {
+          "name": "panNo",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isVatRegistered": {
+          "name": "isVatRegistered",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "bankReconcileDate": {
+          "name": "bankReconcileDate",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subAreaId": {
+          "name": "subAreaId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "agentId": {
+          "name": "agentId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "Party_agentId_idx": {
+          "name": "Party_agentId_idx",
+          "columns": [
+            {
+              "expression": "agentId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "Party_companyId_idx": {
+          "name": "Party_companyId_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "Party_panNo_idx": {
+          "name": "Party_panNo_idx",
+          "columns": [
+            {
+              "expression": "panNo",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "Party_subAreaId_idx": {
+          "name": "Party_subAreaId_idx",
+          "columns": [
+            {
+              "expression": "subAreaId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "Party_generalLedgerId_fkey": {
+          "name": "Party_generalLedgerId_fkey",
+          "tableFrom": "Party",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "generalLedgerId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "Party_subAreaId_fkey": {
+          "name": "Party_subAreaId_fkey",
+          "tableFrom": "Party",
+          "tableTo": "SubArea",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "subAreaId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "Party_agentId_fkey": {
+          "name": "Party_agentId_fkey",
+          "tableFrom": "Party",
+          "tableTo": "Agent",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "agentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "Party_companyId_fkey": {
+          "name": "Party_companyId_fkey",
+          "tableFrom": "Party",
+          "tableTo": "Company",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "companyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "Party_generalLedgerId_key": {
+          "columns": [
+            "generalLedgerId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "Party_generalLedgerId_key"
+        },
+        "Party_companyId_panNo_key": {
+          "columns": [
+            "panNo",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "Party_companyId_panNo_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.Company": {
+      "name": "Company",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address": {
+          "name": "address",
+          "type": "varchar(300)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "logoUrl": {
+          "name": "logoUrl",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "baseCurrency": {
+          "name": "baseCurrency",
+          "type": "varchar(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'NPR'"
+        },
+        "retainedEarningsGLId": {
+          "name": "retainedEarningsGLId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "legalName": {
+          "name": "legalName",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "businessType": {
+          "name": "businessType",
+          "type": "BusinessType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'OTHER'"
+        },
+        "registrationNo": {
+          "name": "registrationNo",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "panNo": {
+          "name": "panNo",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "vatNo": {
+          "name": "vatNo",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isVatRegistered": {
+          "name": "isVatRegistered",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "taxOfficeName": {
+          "name": "taxOfficeName",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "city": {
+          "name": "city",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "district": {
+          "name": "district",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "province": {
+          "name": "province",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "country": {
+          "name": "country",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'Nepal'"
+        },
+        "website": {
+          "name": "website",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "defaultCalendarPref": {
+          "name": "defaultCalendarPref",
+          "type": "CalendarPreference",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'BS'"
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        }
+      },
+      "indexes": {
+        "Company_isActive_idx": {
+          "name": "Company_isActive_idx",
+          "columns": [
+            {
+              "expression": "isActive",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "bool_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "Company_retainedEarningsGLId_fkey": {
+          "name": "Company_retainedEarningsGLId_fkey",
+          "tableFrom": "Company",
+          "tableTo": "GeneralLedger",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "retainedEarningsGLId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "Company_retainedEarningsGLId_key": {
+          "columns": [
+            "retainedEarningsGLId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "Company_retainedEarningsGLId_key"
+        },
+        "Company_code_key": {
+          "columns": [
+            "code"
+          ],
+          "nullsNotDistinct": false,
+          "name": "Company_code_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.Branch": {
+      "name": "Branch",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isHeadOffice": {
+          "name": "isHeadOffice",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "address": {
+          "name": "address",
+          "type": "varchar(300)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "Branch_companyId_idx": {
+          "name": "Branch_companyId_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "Branch_only_one_head_office_per_company": {
+          "name": "Branch_only_one_head_office_per_company",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "where": "(\"isHeadOffice\" = true)",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "Branch_companyId_fkey": {
+          "name": "Branch_companyId_fkey",
+          "tableFrom": "Branch",
+          "tableTo": "Company",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "companyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "Branch_companyId_code_key": {
+          "columns": [
+            "companyId",
+            "code"
+          ],
+          "nullsNotDistinct": false,
+          "name": "Branch_companyId_code_key"
+        },
+        "Branch_companyId_name_key": {
+          "columns": [
+            "companyId",
+            "name"
+          ],
+          "nullsNotDistinct": false,
+          "name": "Branch_companyId_name_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.UserCompanyAccess": {
+      "name": "UserCompanyAccess",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "branchId": {
+          "name": "branchId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "role": {
+          "name": "role",
+          "type": "CompanyRole",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'VIEWER'"
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "UserCompanyAccess_branchId_idx": {
+          "name": "UserCompanyAccess_branchId_idx",
+          "columns": [
+            {
+              "expression": "branchId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "UserCompanyAccess_companyId_idx": {
+          "name": "UserCompanyAccess_companyId_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "UserCompanyAccess_userId_fkey": {
+          "name": "UserCompanyAccess_userId_fkey",
+          "tableFrom": "UserCompanyAccess",
+          "tableTo": "User",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "UserCompanyAccess_companyId_fkey": {
+          "name": "UserCompanyAccess_companyId_fkey",
+          "tableFrom": "UserCompanyAccess",
+          "tableTo": "Company",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "companyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "UserCompanyAccess_branchId_fkey": {
+          "name": "UserCompanyAccess_branchId_fkey",
+          "tableFrom": "UserCompanyAccess",
+          "tableTo": "Branch",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "branchId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "UserCompanyAccess_userId_companyId_branchId_key": {
+          "columns": [
+            "userId",
+            "companyId",
+            "branchId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "UserCompanyAccess_userId_companyId_branchId_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.ProductGroup": {
+      "name": "ProductGroup",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "companyId": {
+          "name": "companyId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ProductGroup_companyId_idx": {
+          "name": "ProductGroup_companyId_idx",
+          "columns": [
+            {
+              "expression": "companyId",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "ProductGroup_companyId_fkey": {
+          "name": "ProductGroup_companyId_fkey",
+          "tableFrom": "ProductGroup",
+          "tableTo": "Company",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "companyId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "ProductGroup_companyId_code_key": {
+          "columns": [
+            "code",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "ProductGroup_companyId_code_key"
+        },
+        "ProductGroup_companyId_name_key": {
+          "columns": [
+            "name",
+            "companyId"
+          ],
+          "nullsNotDistinct": false,
+          "name": "ProductGroup_companyId_name_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.AccountType": {
+      "name": "AccountType",
+      "values": [
+        "ASSET",
+        "LIABILITY",
+        "EQUITY",
+        "REVENUE",
+        "EXPENSE"
+      ],
+      "schema": "public"
+    },
+    "public.AuditAction": {
+      "name": "AuditAction",
+      "values": [
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ],
+      "schema": "public"
+    },
+    "public.BusinessType": {
+      "name": "BusinessType",
+      "values": [
+        "SOLE_PROPRIETORSHIP",
+        "PARTNERSHIP",
+        "PRIVATE_LIMITED",
+        "PUBLIC_LIMITED",
+        "OTHER"
+      ],
+      "schema": "public"
+    },
+    "public.CalendarPreference": {
+      "name": "CalendarPreference",
+      "values": [
+        "BS",
+        "AD"
+      ],
+      "schema": "public"
+    },
+    "public.CompanyRole": {
+      "name": "CompanyRole",
+      "values": [
+        "ADMIN",
+        "ACCOUNTANT",
+        "VIEWER"
+      ],
+      "schema": "public"
+    },
+    "public.DepreciationMethod": {
+      "name": "DepreciationMethod",
+      "values": [
+        "STRAIGHT_LINE",
+        "WRITTEN_DOWN_VALUE"
+      ],
+      "schema": "public"
+    },
+    "public.DocumentType": {
+      "name": "DocumentType",
+      "values": [
+        "CASH_BANK_VOUCHER",
+        "JOURNAL_VOUCHER",
+        "SALES_INVOICE",
+        "PURCHASE_BILL"
+      ],
+      "schema": "public"
+    },
+    "public.GLType": {
+      "name": "GLType",
+      "values": [
+        "CUSTOMER",
+        "VENDOR",
+        "BOTH",
+        "OTHER"
+      ],
+      "schema": "public"
+    },
+    "public.InstrumentType": {
+      "name": "InstrumentType",
+      "values": [
+        "CHEQUE",
+        "RTGS",
+        "ONLINE_TRANSFER",
+        "OTHER"
+      ],
+      "schema": "public"
+    },
+    "public.NormalBalance": {
+      "name": "NormalBalance",
+      "values": [
+        "DEBIT",
+        "CREDIT"
+      ],
+      "schema": "public"
+    },
+    "public.ProductType": {
+      "name": "ProductType",
+      "values": [
+        "STOCK",
+        "NON_STOCK",
+        "SERVICE",
+        "FIXED_ASSET",
+        "BUNDLE"
+      ],
+      "schema": "public"
+    },
+    "public.ValuationMethod": {
+      "name": "ValuationMethod",
+      "values": [
+        "FIFO",
+        "WEIGHTED_AVERAGE",
+        "STANDARD_COST"
+      ],
+      "schema": "public"
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {
+    "public.vw_ledger_transactions": {
+      "name": "vw_ledger_transactions",
+      "schema": "public",
+      "columns": {
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "voucherId": {
+          "name": "voucherId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "voucherNumber": {
+          "name": "voucherNumber",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "voucherDate": {
+          "name": "voucherDate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "generalLedgerId": {
+          "name": "generalLedgerId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "debit": {
+          "name": "debit",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "credit": {
+          "name": "credit",
+          "type": "numeric(18, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "narration": {
+          "name": "narration",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "isExisting": false,
+      "definition": "SELECT 'JOURNAL'::text AS source, jv.id AS \"voucherId\", jv.\"voucherNumber\", jv.\"voucherDate\", jvl.\"generalLedgerId\", jvl.debit, jvl.credit, jvl.narration FROM \"JournalVoucherLine\" jvl JOIN \"JournalVoucher\" jv ON jv.id = jvl.\"journalVoucherId\" WHERE jv.\"isPosted\" = true UNION ALL SELECT 'CASH_BANK'::text AS source, cbv.id AS \"voucherId\", cbv.\"voucherNumber\", cbv.\"voucherDate\", cbl.\"generalLedgerId\", cbl.debit, cbl.credit, cbl.narration FROM \"CashBankVoucherLine\" cbl JOIN \"CashBankVoucher\" cbv ON cbv.id = cbl.\"cashBankVoucherId\" WHERE cbv.\"isPosted\" = true",
+      "materialized": false
+    }
+  },
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "tables": {}
+  }
+}

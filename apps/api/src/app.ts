@@ -37,7 +37,7 @@ export function createApp({ webOrigin, db, auth }: AppDeps) {
   // (company/branch/fiscal year, already checked against UserCompanyAccess).
   const authed = [requireAuth(auth, db)];
   const scoped = [...authed, companyContext(db)];
-  app.use("/api/me", ...scoped, meRouter(db));
+  app.use("/api/me", ...authed, meRouter(db));
   // Feature routers are mounted here with `scoped`, one per migrated module.
 
   app.use(notFoundHandler);

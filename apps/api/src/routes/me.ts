@@ -1,9 +1,15 @@
 import { Router } from "express";
 import { and, asc, eq } from "drizzle-orm";
 import type { Db } from "../db/client";
+import { parseContextHeaders, resolveContext, type CompanyContext } from "../auth/companyContext";
 import { branch, company, fiscalYear, userCompanyAccess } from "../db/schema";
+import { AppError } from "../http/errors";
 
-/** Who am I, which companies/branches/fiscal years can I switch to, and what is currently selected. */
+/**
+ * Who am I, which companies/branches/fiscal years can I switch to, and what is currently selected.
+ * Deliberately NOT behind companyContext: the client needs this list in order to choose a context,
+ * so an unresolved selection is reported as context:null + contextError instead of an HTTP error.
+ */
 export function meRouter(db: Db) {
   const r = Router();
   r.get("/", async (req, res) => {
@@ -39,7 +45,15 @@ export function meRouter(db: Db) {
         .orderBy(asc(fiscalYear.startDate));
       companies.push({ id, code: rows[0]!.companyCode, name: rows[0]!.companyName, allBranches: companyWide, branches, fiscalYears });
     }
-    res.json({ user: req.appUser, companies, context: req.ctx });
+    let context: CompanyContext | null = null;
+    let contextError: string | null = null;
+    try {
+      context = await resolveContext(db, req.appUser.id, parseContextHeaders(req.headers));
+    } catch (e) {
+      if (!(e instanceof AppError)) throw e;
+      contextError = e.message;
+    }
+    res.json({ user: req.appUser, companies, context, contextError });
   });
   return r;
 }

@@ -1,22 +1,44 @@
 import express from "express";
 import cors from "cors";
+import { toNodeHandler } from "better-auth/node";
+import type { Auth } from "./auth/auth";
+import { companyContext } from "./auth/companyContext";
+import { requireAuth } from "./auth/session";
+import type { Db } from "./db/client";
 import { errorHandler, notFoundHandler } from "./http/errorHandler";
+import { meRouter } from "./routes/me";
 
-export interface AppOptions {
+export interface AppDeps {
   webOrigin: string;
+  db: Db;
+  auth: Auth;
 }
 
-export function createApp(opts: AppOptions) {
+export function createApp({ webOrigin, db, auth }: AppDeps) {
   const app = express();
   app.disable("x-powered-by");
-  app.use(cors({ origin: opts.webOrigin, credentials: true }));
-  app.use(express.json({ limit: "1mb" }));
+  app.use(
+    cors({
+      origin: webOrigin,
+      credentials: true,
+      allowedHeaders: ["content-type", "x-company-id", "x-branch-id", "x-fiscal-year-id"],
+    }),
+  );
 
+  // Better Auth must see the raw body, so it is mounted before express.json().
+  app.all("/api/auth/*splat", toNodeHandler(auth));
+
+  app.use(express.json({ limit: "1mb" }));
   app.get("/api/health", (_req, res) => {
     res.json({ ok: true });
   });
 
-  // Feature routers are mounted here, one per module, as they are migrated.
+  // Everything below needs a signed-in user; module routers also get req.ctx
+  // (company/branch/fiscal year, already checked against UserCompanyAccess).
+  const authed = [requireAuth(auth, db)];
+  const scoped = [...authed, companyContext(db)];
+  app.use("/api/me", ...scoped, meRouter(db));
+  // Feature routers are mounted here with `scoped`, one per migrated module.
 
   app.use(notFoundHandler);
   app.use(errorHandler);

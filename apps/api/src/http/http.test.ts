@@ -17,7 +17,7 @@ function appWith(register: (a: express.Express) => void) {
 }
 
 describe("createApp", () => {
-  const app = createApp({ webOrigin: "http://localhost:5173" });
+  const app = createApp({ webOrigin: "http://localhost:5173", db: {} as never, auth: { handler: async () => new Response("x") } as never });
   it("serves /api/health", async () => {
     const res = await request(app).get("/api/health");
     expect(res.status).toBe(200);

@@ -5,7 +5,7 @@ Monorepo (npm workspaces) mid-migration from Next.js + Prisma to the target stac
 | Path | What |
 |---|---|
 | `packages/shared` | Money (decimal.js), BS/AD dates, enums — used by web and api |
-| `apps/api` | Express + Drizzle ORM + PostgreSQL (DB layer done; routes next) |
+| `apps/api` | Express + Drizzle ORM + PostgreSQL + Better Auth (DB, auth and company context done; module routes next) |
 | `apps/web` | React + Vite (not started) |
 | `legacy/` | The previous Next.js app. Still runnable on its own (`cd legacy && npm i && npm run dev`). Deleted at cutover. |
 
@@ -17,6 +17,17 @@ cp .env.example .env            # point DATABASE_URL at Postgres
 npm run db:migrate              # applies apps/api/drizzle/*.sql
 npm run typecheck && npm test
 ```
+
+## Auth and company context
+
+- Better Auth, invite-only: a login can only be created for an email that already exists in `"User"`.
+  Login tables are `AuthUser/AuthSession/AuthAccount/AuthVerification`; `"User"."authUserId"` links them
+  to the integer-keyed app user that the rest of the schema references.
+- First admin: `npm run user:create -w @ntcas/api -- --email you@x.com --name "You" --password '...' --admin`
+- Every module router is mounted behind `requireAuth` + `companyContext`. The client sends
+  `X-Company-Id`, `X-Branch-Id` (or `all`) and `X-Fiscal-Year-Id`; the server checks them against
+  `UserCompanyAccess` and exposes the result as `req.ctx`. Modules must never read those headers themselves.
+- Writes go through `withTx(db, req.appUser.id, ...)` so the audit trigger knows who made the change.
 
 ## Database rules
 

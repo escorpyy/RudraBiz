@@ -6,6 +6,7 @@ import { companyContext } from "./auth/companyContext";
 import { requireAuth } from "./auth/session";
 import type { Db } from "./db/client";
 import { errorHandler, notFoundHandler } from "./http/errorHandler";
+import { agentsRouter } from "./modules/agents/agents.router";
 import { meRouter } from "./routes/me";
 
 export interface AppDeps {
@@ -38,6 +39,7 @@ export function createApp({ webOrigin, db, auth }: AppDeps) {
   const authed = [requireAuth(auth, db)];
   const scoped = [...authed, companyContext(db)];
   app.use("/api/me", ...authed, meRouter(db));
+  app.use("/api/agents", ...scoped, agentsRouter(db));
   // Feature routers are mounted here with `scoped`, one per migrated module.
 
   app.use(notFoundHandler);

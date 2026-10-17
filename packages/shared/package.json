@@ -9,7 +9,8 @@
     ".": "./src/index.ts",
     "./money": "./src/money.ts",
     "./nepaliDate": "./src/nepaliDate.ts",
-    "./enums": "./src/enums.ts"
+    "./enums": "./src/enums.ts",
+    "./schemas/agent": "./src/schemas/agent.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

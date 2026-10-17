@@ -14,6 +14,19 @@ function isPgError(e: unknown): e is PgErrorLike {
 }
 
 /**
+ * Drizzle (>= 0.44) wraps driver errors in DrizzleQueryError and keeps the original
+ * node-postgres error in `.cause`, so walk the chain to find the Postgres error.
+ */
+export function findPgError(err: unknown): PgErrorLike | null {
+  let cur: unknown = err;
+  for (let depth = 0; depth < 5 && cur; depth++) {
+    if (isPgError(cur)) return cur;
+    cur = (cur as { cause?: unknown }).cause;
+  }
+  return null;
+}
+
+/**
  * Maps Postgres errors to HTTP. The database triggers (balance check, posted
  * immutability, control-account guard, opening-balance lock) raise P0001 with
  * a human-readable message, so those are shown to the user as 422.
@@ -49,7 +62,8 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     });
     return;
   }
-  const mapped = err instanceof AppError ? err : isPgError(err) ? mapPgError(err) : null;
+  const pgErr = err instanceof AppError ? null : findPgError(err);
+  const mapped = err instanceof AppError ? err : pgErr ? mapPgError(pgErr) : null;
   if (mapped) {
     res.status(mapped.status).json({
       error: { code: mapped.code, message: mapped.message, details: mapped.details },

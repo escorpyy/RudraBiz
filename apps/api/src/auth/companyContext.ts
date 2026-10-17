@@ -1,3 +1,4 @@
+import type { IncomingHttpHeaders } from "node:http";
 import type { RequestHandler } from "express";
 import { and, asc, eq } from "drizzle-orm";
 import type { Db } from "../db/client";
@@ -97,17 +98,21 @@ function headerInt(v: string | string[] | undefined, name: string): number | und
   return Number(s);
 }
 
-/** Reads X-Company-Id / X-Branch-Id ("all" ok) / X-Fiscal-Year-Id. Must run after requireAuth. */
+/** Reads X-Company-Id / X-Branch-Id ("all" ok) / X-Fiscal-Year-Id. */
+export function parseContextHeaders(headers: IncomingHttpHeaders): ContextInput {
+  const rawBranch = headers["x-branch-id"];
+  return {
+    companyId: headerInt(headers["x-company-id"], "X-Company-Id"),
+    branchId: rawBranch === "all" ? "all" : headerInt(rawBranch, "X-Branch-Id"),
+    fiscalYearId: headerInt(headers["x-fiscal-year-id"], "X-Fiscal-Year-Id"),
+  };
+}
+
+/** Resolves req.ctx for module routes. Must run after requireAuth. */
 export function companyContext(db: Db): RequestHandler {
   return async (req, _res, next) => {
     try {
-      const rawBranch = req.headers["x-branch-id"];
-      const input: ContextInput = {
-        companyId: headerInt(req.headers["x-company-id"], "X-Company-Id"),
-        branchId: rawBranch === "all" ? "all" : headerInt(rawBranch, "X-Branch-Id"),
-        fiscalYearId: headerInt(req.headers["x-fiscal-year-id"], "X-Fiscal-Year-Id"),
-      };
-      req.ctx = await resolveContext(db, req.appUser.id, input);
+      req.ctx = await resolveContext(db, req.appUser.id, parseContextHeaders(req.headers));
       next();
     } catch (e) {
       next(e);

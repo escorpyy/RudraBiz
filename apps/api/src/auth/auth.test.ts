@@ -105,20 +105,31 @@ describe.skipIf(!url)("auth + company context (real Postgres)", () => {
     expect(res.body.companies[0].branches.map((b: { id: number }) => b.id)).toEqual([ids.a1, ids.a2]);
   });
 
-  it("blocks another company, and branches/fiscal years that belong to another company", async () => {
-    expect((await get("/api/me", adminCookie, { "x-company-id": String(ids.coB) })).status).toBe(403);
-    expect((await get("/api/me", adminCookie, { "x-branch-id": String(ids.b1) })).status).toBe(403);
-    expect((await get("/api/me", adminCookie, { "x-fiscal-year-id": String(ids.fyB) })).status).toBe(403);
-    expect((await get("/api/me", adminCookie, { "x-company-id": "abc" })).status).toBe(400);
+  it("resolveContext blocks another company, and branches/fiscal years of another company", async () => {
+    const admin = ids.admin!;
+    await expect(resolveContext(db as never, admin, { companyId: ids.coB })).rejects.toMatchObject({ status: 403 });
+    await expect(resolveContext(db as never, admin, { branchId: ids.b1 })).rejects.toMatchObject({ status: 403 });
+    await expect(resolveContext(db as never, admin, { fiscalYearId: ids.fyB })).rejects.toMatchObject({ status: 403 });
+  });
+
+  it("/api/me reports a bad selection as contextError and still lists what the user can pick", async () => {
+    const res = await get("/api/me", adminCookie, { "x-company-id": String(ids.coB) });
+    expect(res.status).toBe(200);
+    expect(res.body.context).toBeNull();
+    expect(res.body.contextError).toMatch(/access/i);
+    expect(res.body.companies).toHaveLength(1);
+    expect((await get("/api/me", adminCookie, { "x-company-id": "abc" })).body.contextError).toMatch(/Invalid/);
   });
 
   it("branch-restricted users never get company-wide scope", async () => {
+    // two branches allowed and none chosen: no context yet, but /api/me still lists the branches
     const none = await get("/api/me", restrictedCookie);
-    expect(none.status).toBe(400); // two branches allowed, none chosen
-    const all = await get("/api/me", restrictedCookie, { "x-branch-id": "all" });
-    expect(all.status).toBe(400);
+    expect(none.status).toBe(200);
+    expect(none.body.context).toBeNull();
+    expect(none.body.contextError).toMatch(/branch/i);
+    expect(none.body.companies[0].branches.map((b: { id: number }) => b.id)).toEqual([ids.a1, ids.a2]);
+    expect((await get("/api/me", restrictedCookie, { "x-branch-id": "all" })).body.context).toBeNull();
     const ok = await get("/api/me", restrictedCookie, { "x-branch-id": String(ids.a1) });
-    expect(ok.status).toBe(200);
     expect(ok.body.context.role).toBe("ACCOUNTANT");
     const viewer = await get("/api/me", restrictedCookie, { "x-branch-id": String(ids.a2) });
     expect(viewer.body.context.role).toBe("VIEWER");

@@ -31,6 +31,18 @@ npm run dev -w @ntcas/web       # http://localhost:5173 (proxies /api to the API
   `UserCompanyAccess` and exposes the result as `req.ctx`. Modules must never read those headers themselves.
 - Writes go through `withTx(db, req.appUser.id, ...)` so the audit trigger knows who made the change.
 
+## Adding a simple master (company-scoped code/name/status table)
+
+1. `packages/shared/src/schemas/<name>.ts`: Zod input schema + row type (export it from `index.ts`).
+2. `apps/api/src/modules/<name>/<name>.router.ts`: one `crudRouter(db, {...})` call (table, schemas,
+   selected columns, search columns, `unique` rules with a message and field per constraint). Mount it in `app.ts`.
+3. `apps/api/src/modules/<name>/<name>.test.ts`: `describeCrud({...})` + `describeSchemaDrift(...)` give you
+   roles, validation, duplicates, tenant isolation, filters, update, delete and audit-trail tests.
+4. `apps/web/src/modules/<name>/config.tsx`: a `MasterConfig` (columns, stats, form fields, summary), then
+   `{masterRoutes(config)}` in `App.tsx`. List, form, detail, bulk select/activate/delete come for free.
+
+Masters with special inputs (selects, numbers, dates) add a field `kind` to `components/master/types.ts`.
+
 ## Database rules
 
 - `apps/api/drizzle/0000_baseline.sql` is the legacy Prisma schema **including triggers**

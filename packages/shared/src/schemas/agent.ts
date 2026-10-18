@@ -22,11 +22,6 @@ export const agentUpdateSchema = agentInputSchema.partial();
 export type AgentInput = z.input<typeof agentInputSchema>;
 export type AgentData = z.output<typeof agentInputSchema>;
 
-export const agentListQuerySchema = z.object({
-  status: z.enum(["all", "active"]).default("all"),
-  q: z.string().trim().max(100).optional(),
-});
-
 export interface AgentRow {
   id: number;
   code: string;

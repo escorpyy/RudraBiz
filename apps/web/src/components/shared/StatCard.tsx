@@ -1,20 +1,15 @@
 import type { LucideIcon } from "lucide-react";
 
-export default function StatCard({
-  icon: Icon,
-  iconBg,
-  iconColor,
-  label,
-  value,
-  caption,
-}: {
+export interface StatCardProps {
   icon: LucideIcon;
   iconBg: string;
   iconColor: string;
   label: string;
   value: number;
   caption: string;
-}) {
+}
+
+export default function StatCard({ icon: Icon, iconBg, iconColor, label, value, caption }: StatCardProps) {
   return (
     <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-card">
       <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${iconBg}`}>

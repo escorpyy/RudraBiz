@@ -8,6 +8,8 @@ import { locationsConfig } from "./modules/locations/config";
 import { unitsConfig } from "./modules/units/config";
 import { productSubGroupsConfig } from "./modules/productSubGroups/config";
 import { subAreasConfig } from "./modules/subAreas/config";
+import { accountGroupsConfig } from "./modules/accountGroups/config";
+import { accountSubGroupsConfig } from "./modules/accountSubGroups/config";
 import { areasConfig } from "./modules/areas/config";
 import { productGroupsConfig } from "./modules/productGroups/config";
 import { taxRatesConfig } from "./modules/taxRates/config";
@@ -32,6 +34,8 @@ export default function App() {
           {masterRoutes(locationsConfig)}
           {masterRoutes(subAreasConfig)}
           {masterRoutes(productSubGroupsConfig)}
+          {masterRoutes(accountGroupsConfig)}
+          {masterRoutes(accountSubGroupsConfig)}
           <Route path="*" element={<NotMigrated />} />
         </Route>
       </Route>

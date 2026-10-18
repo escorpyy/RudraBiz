@@ -5,7 +5,7 @@ import { z, type ZodTypeAny } from "zod";
 import { masterListQuerySchema } from "@ntcas/shared";
 import { requireRole, type CompanyContext, type Role } from "../auth/companyContext";
 import type { Db } from "../db/client";
-import { withTx } from "../db/tx";
+import { withTx, type Tx } from "../db/tx";
 import { conflict, notFound } from "./errors";
 import { orConflict, type UniqueRule } from "./pg";
 import { validate } from "./validate";
@@ -36,6 +36,11 @@ export interface CrudConfig<Row extends { id: number }, Extra extends object> {
    * or null to allow it. Use for rules the FK would only report as a generic "in use" error.
    */
   deleteGuard?: (db: Db, row: Row, ctx: CompanyContext) => Promise<string | null>;
+  /**
+   * Runs inside the write transaction before an insert or update, with the validated body
+   * (`id` is set on update). Throw `fieldError(...)` to reject it, e.g. "parent not found".
+   */
+  beforeWrite?: (tx: Tx, input: Record<string, unknown>, ctx: CompanyContext, id?: number) => Promise<void>;
   /** Extra data merged into GET /:id (e.g. records tagged to this one). */
   detail?: (db: Db, row: Row, ctx: CompanyContext) => Promise<Extra>;
 }
@@ -84,6 +89,7 @@ export function crudRouter<Row extends { id: number }, Extra extends object = Re
   r.post("/", writer, validate({ body: cfg.inputSchema }), async (req, res) => {
     const created = await orConflict(cfg.unique, () =>
       withTx(db, req.appUser.id, async (tx) => {
+        await cfg.beforeWrite?.(tx, req.valid.body as Record<string, unknown>, req.ctx);
         const [a] = await tx
           .insert(t)
           .values({ ...(req.valid.body as object), companyId: req.ctx.companyId, updatedAt: sql`CURRENT_TIMESTAMP` } as never)
@@ -98,6 +104,7 @@ export function crudRouter<Row extends { id: number }, Extra extends object = Re
     const { id } = req.valid.params as z.infer<typeof idParams>;
     await orConflict(cfg.unique, () =>
       withTx(db, req.appUser.id, async (tx) => {
+        await cfg.beforeWrite?.(tx, req.valid.body as Record<string, unknown>, req.ctx, id);
         const updated = await tx
           .update(t)
           .set({ ...(req.valid.body as object), updatedAt: sql`CURRENT_TIMESTAMP` } as never)

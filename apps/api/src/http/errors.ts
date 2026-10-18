@@ -16,3 +16,6 @@ export const unauthorized = (msg = "Not signed in") => new AppError(401, "UNAUTH
 export const forbidden = (msg = "Not allowed") => new AppError(403, "FORBIDDEN", msg);
 export const notFound = (what = "Resource") => new AppError(404, "NOT_FOUND", `${what} not found`);
 export const conflict = (msg: string, details?: unknown) => new AppError(409, "CONFLICT", msg, details);
+/** A 400 that the form can pin to one field, same shape as a Zod validation error. */
+export const fieldError = (field: string, msg: string) =>
+  new AppError(400, "VALIDATION", "Validation failed", { formErrors: [], fieldErrors: { [field]: [msg] } });

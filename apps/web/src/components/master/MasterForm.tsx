@@ -132,7 +132,7 @@ function SelectField<Row extends MasterRow>({
 }: { cfg: MasterConfig<Row>; field: SelectDef<Row>; excludeId?: number; register: UseFormRegister<FieldValues>; error?: string }) {
   const src = Array.isArray(f.options) ? null : "self" in f.options ? { key: cfg.key, apiPath: cfg.apiPath } : f.options.from;
   const list = useMasterList<MasterRow & Record<string, string>>({ key: src?.key ?? cfg.key, apiPath: src?.apiPath ?? cfg.apiPath });
-  let options: { value: number; label: string }[] = [];
+  let options: { value: number | string; label: string }[] = [];
   if (Array.isArray(f.options)) options = f.options;
   else if ("self" in f.options) {
     const label = f.options.self;
@@ -159,7 +159,10 @@ function SelectField<Row extends MasterRow>({
           <select
             id={f.name}
             className={`${inputCls} appearance-none bg-white pr-10 ${Icon ? "pl-10" : "pl-3.5"}`}
-            {...register(f.name, { setValueAs: (v) => (v === "" || v == null ? (f.emptyLabel ? null : undefined) : Number(v)) })}
+            {...register(f.name, {
+              // <select> gives strings; hand back the option's own value (number or string), null when optional and empty
+              setValueAs: (v) => (v === "" || v == null ? (f.emptyLabel ? null : undefined) : (options.find((o) => String(o.value) === String(v))?.value ?? v)),
+            })}
           >
             {f.emptyLabel !== undefined && <option value="">{f.emptyLabel}</option>}
             {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}

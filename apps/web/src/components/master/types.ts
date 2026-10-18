@@ -42,13 +42,13 @@ export type FieldDef<Row = never> =
        * or `{ from }` to pick a row of another master, e.g. the Area of a Sub-Area (inactive ones are marked).
        */
       options:
-        | { value: number; label: string }[]
+        | { value: number | string; label: string }[]
         | { self: (row: Row) => string }
         | { from: { key: string; apiPath: string; label: (row: MasterRow & Record<string, string>) => string } };
       /** Shown for the empty choice. Present = optional field, empty is sent as null. */
       emptyLabel?: string;
       /** Initial value on the create form. */
-      defaultValue?: number;
+      defaultValue?: number | string;
     }
   | { kind: "status"; label: string; hint: string };
 

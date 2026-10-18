@@ -19,7 +19,9 @@
     "./schemas/unit": "./src/schemas/unit.ts",
     "./schemas/location": "./src/schemas/location.ts",
     "./schemas/subArea": "./src/schemas/subArea.ts",
-    "./schemas/productSubGroup": "./src/schemas/productSubGroup.ts"
+    "./schemas/productSubGroup": "./src/schemas/productSubGroup.ts",
+    "./schemas/accountGroup": "./src/schemas/accountGroup.ts",
+    "./schemas/accountSubGroup": "./src/schemas/accountSubGroup.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

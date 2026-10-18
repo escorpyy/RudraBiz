@@ -11,6 +11,8 @@ import { locationsRouter } from "./modules/locations/locations.router";
 import { unitsRouter } from "./modules/units/units.router";
 import { productSubGroupsRouter } from "./modules/productSubGroups/productSubGroups.router";
 import { subAreasRouter } from "./modules/subAreas/subAreas.router";
+import { accountGroupsRouter } from "./modules/accountGroups/accountGroups.router";
+import { accountSubGroupsRouter } from "./modules/accountSubGroups/accountSubGroups.router";
 import { areasRouter } from "./modules/areas/areas.router";
 import { productGroupsRouter } from "./modules/productGroups/productGroups.router";
 import { taxRatesRouter } from "./modules/taxRates/taxRates.router";
@@ -56,6 +58,8 @@ export function createApp({ webOrigin, db, auth }: AppDeps) {
   app.use("/api/locations", ...scoped, locationsRouter(db));
   app.use("/api/sub-areas", ...scoped, subAreasRouter(db));
   app.use("/api/product-sub-groups", ...scoped, productSubGroupsRouter(db));
+  app.use("/api/account-groups", ...scoped, accountGroupsRouter(db));
+  app.use("/api/account-sub-groups", ...scoped, accountSubGroupsRouter(db));
   // Feature routers are mounted here with `scoped`, one per migrated module.
 
   app.use(notFoundHandler);

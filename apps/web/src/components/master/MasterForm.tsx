@@ -130,11 +130,17 @@ type SelectDef<Row> = Extract<FieldDef<Row>, { kind: "select" }>;
 function SelectField<Row extends MasterRow>({
   cfg, field: f, excludeId, register, error,
 }: { cfg: MasterConfig<Row>; field: SelectDef<Row>; excludeId?: number; register: UseFormRegister<FieldValues>; error?: string }) {
-  const own = "self" in f.options;
-  const list = useMasterList<Row>({ key: cfg.key, apiPath: cfg.apiPath });
-  const options = own
-    ? (list.data ?? []).filter((r) => r.id !== excludeId).map((r) => ({ value: r.id, label: (f.options as { self: (row: Row) => string }).self(r) }))
-    : (f.options as { value: number; label: string }[]);
+  const src = Array.isArray(f.options) ? null : "self" in f.options ? { key: cfg.key, apiPath: cfg.apiPath } : f.options.from;
+  const list = useMasterList<MasterRow & Record<string, string>>({ key: src?.key ?? cfg.key, apiPath: src?.apiPath ?? cfg.apiPath });
+  let options: { value: number; label: string }[] = [];
+  if (Array.isArray(f.options)) options = f.options;
+  else if ("self" in f.options) {
+    const label = f.options.self;
+    options = (list.data ?? []).filter((r) => r.id !== excludeId).map((r) => ({ value: r.id, label: label(r as never) }));
+  } else {
+    const label = f.options.from.label;
+    options = (list.data ?? []).map((r) => ({ value: r.id, label: label(r) + (r.isActive ? "" : " (inactive)") }));
+  }
   const Icon = f.icon;
   return (
     <div>
@@ -144,14 +150,21 @@ function SelectField<Row extends MasterRow>({
       <p className="mb-2 text-xs text-slate-500">{f.hint}</p>
       <div className="relative">
         {Icon && <Icon size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500" />}
-        <select
-          id={f.name}
-          className={`${inputCls} appearance-none bg-white pr-10 ${Icon ? "pl-10" : "pl-3.5"}`}
-          {...register(f.name, { setValueAs: (v) => (v === "" || v == null ? (f.emptyLabel ? null : undefined) : Number(v)) })}
-        >
-          {f.emptyLabel !== undefined && <option value="">{f.emptyLabel}</option>}
-          {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
+        {/* Mount the real select only once its options exist: a saved value can't be selected before its <option> does. */}
+        {src && list.isPending ? (
+          <select id={f.name} disabled className={`${inputCls} appearance-none bg-white pr-10 ${Icon ? "pl-10" : "pl-3.5"}`}>
+            <option>Loading...</option>
+          </select>
+        ) : (
+          <select
+            id={f.name}
+            className={`${inputCls} appearance-none bg-white pr-10 ${Icon ? "pl-10" : "pl-3.5"}`}
+            {...register(f.name, { setValueAs: (v) => (v === "" || v == null ? (f.emptyLabel ? null : undefined) : Number(v)) })}
+          >
+            {f.emptyLabel !== undefined && <option value="">{f.emptyLabel}</option>}
+            {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        )}
         <ChevronDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
       </div>
       {error && <p className="mt-1 text-xs text-rose-600">{error}</p>}

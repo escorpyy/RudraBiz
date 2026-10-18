@@ -10,10 +10,14 @@ import { conflict, notFound } from "./errors";
 import { orConflict, type UniqueRule } from "./pg";
 import { validate } from "./validate";
 
-/** A company-scoped master table: id, companyId, isActive and updatedAt are what the factory relies on. */
+/**
+ * A master table: id, isActive and updatedAt are what the factory relies on. Tables that carry
+ * companyId are scoped by it; tables owned through a parent (SubArea, ProductSubGroup) have none
+ * and must give `scope` instead.
+ */
 export type MasterTable = PgTable & {
   id: AnyPgColumn;
-  companyId: AnyPgColumn;
+  companyId?: AnyPgColumn;
   isActive: AnyPgColumn;
   updatedAt: AnyPgColumn;
 };
@@ -26,6 +30,11 @@ export interface CrudConfig<Row extends { id: number }, Extra extends object> {
   updateSchema: ZodTypeAny;
   /** Columns (or SQL subqueries such as counts) returned for every row. Must include `id`. */
   select: Record<string, AnyPgColumn | SQL>;
+  /**
+   * Restricts every query to the active company. Default: `table.companyId = ctx.companyId`.
+   * Required for tables without companyId, e.g. `inArray(subArea.areaId, select id from Area where companyId = ...)`.
+   */
+  scope?: (ctx: CompanyContext) => SQL;
   searchColumns: AnyPgColumn[];
   orderBy: AnyPgColumn;
   unique: UniqueRule[];
@@ -60,19 +69,21 @@ export function crudRouter<Row extends { id: number }, Extra extends object = Re
   const r = Router();
   const writer = requireRole(cfg.writeRole ?? "ACCOUNTANT");
   const t = cfg.table;
+  if (!cfg.scope && !t.companyId) throw new Error(`crudRouter(${cfg.entity}): the table has no companyId, so \`scope\` is required`);
+  const inScope = (ctx: CompanyContext): SQL => (cfg.scope ? cfg.scope(ctx) : eq(t.companyId!, ctx.companyId));
 
-  async function findRow(companyId: number, id: number): Promise<Row | undefined> {
+  async function findRow(ctx: CompanyContext, id: number): Promise<Row | undefined> {
     const [row] = await db
       .select(cfg.select)
       .from(t)
-      .where(and(eq(t.id, id), eq(t.companyId, companyId)));
+      .where(and(eq(t.id, id), inScope(ctx)));
     return row as Row | undefined;
   }
 
   r.get("/", validate({ query: masterListQuerySchema }), async (req, res) => {
     const { status, q } = req.valid.query as z.infer<typeof masterListQuerySchema>;
     const where = and(
-      eq(t.companyId, req.ctx.companyId),
+      inScope(req.ctx),
       status === "active" ? eq(t.isActive, true) : undefined,
       q ? or(...cfg.searchColumns.map((c) => ilike(c, `%${q}%`))) : undefined,
     );
@@ -81,7 +92,7 @@ export function crudRouter<Row extends { id: number }, Extra extends object = Re
 
   r.get("/:id", validate({ params: idParams }), async (req, res) => {
     const { id } = req.valid.params as z.infer<typeof idParams>;
-    const row = await findRow(req.ctx.companyId, id);
+    const row = await findRow(req.ctx, id);
     if (!row) throw notFound(cfg.entity);
     res.json(cfg.detail ? { ...row, ...(await cfg.detail(db, row, req.ctx)) } : row);
   });
@@ -92,12 +103,12 @@ export function crudRouter<Row extends { id: number }, Extra extends object = Re
         await cfg.beforeWrite?.(tx, req.valid.body as Record<string, unknown>, req.ctx);
         const [a] = await tx
           .insert(t)
-          .values({ ...(req.valid.body as object), companyId: req.ctx.companyId, updatedAt: sql`CURRENT_TIMESTAMP` } as never)
+          .values({ ...(req.valid.body as object), ...(t.companyId ? { companyId: req.ctx.companyId } : {}), updatedAt: sql`CURRENT_TIMESTAMP` } as never)
           .returning({ id: t.id });
         return a as { id: number };
       }),
     );
-    res.status(201).json(await findRow(req.ctx.companyId, created.id));
+    res.status(201).json(await findRow(req.ctx, created.id));
   });
 
   r.patch("/:id", writer, validate({ params: idParams, body: cfg.updateSchema }), async (req, res) => {
@@ -108,18 +119,18 @@ export function crudRouter<Row extends { id: number }, Extra extends object = Re
         const updated = await tx
           .update(t)
           .set({ ...(req.valid.body as object), updatedAt: sql`CURRENT_TIMESTAMP` } as never)
-          .where(and(eq(t.id, id), eq(t.companyId, req.ctx.companyId)))
+          .where(and(eq(t.id, id), inScope(req.ctx)))
           .returning({ id: t.id });
         if (!updated.length) throw notFound(cfg.entity);
       }),
     );
-    res.json(await findRow(req.ctx.companyId, id));
+    res.json(await findRow(req.ctx, id));
   });
 
   r.delete("/:id", writer, validate({ params: idParams }), async (req, res) => {
     const { id } = req.valid.params as z.infer<typeof idParams>;
     if (cfg.deleteGuard) {
-      const row = await findRow(req.ctx.companyId, id);
+      const row = await findRow(req.ctx, id);
       if (!row) throw notFound(cfg.entity);
       const refusal = await cfg.deleteGuard(db, row, req.ctx);
       if (refusal) throw conflict(refusal);
@@ -127,7 +138,7 @@ export function crudRouter<Row extends { id: number }, Extra extends object = Re
     await withTx(db, req.appUser.id, async (tx) => {
       const deleted = await tx
         .delete(t)
-        .where(and(eq(t.id, id), eq(t.companyId, req.ctx.companyId)))
+        .where(and(eq(t.id, id), inScope(req.ctx)))
         .returning({ id: t.id });
       if (!deleted.length) throw notFound(cfg.entity);
     });

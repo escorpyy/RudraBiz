@@ -37,8 +37,14 @@ export type FieldDef<Row = never> =
       hint: string;
       required?: boolean;
       icon?: LucideIcon;
-      /** Static choices, or `{ self: label }` to pick another row of this same master (the current row is left out). */
-      options: { value: number; label: string }[] | { self: (row: Row) => string };
+      /**
+       * Static choices; `{ self: label }` to pick another row of this same master (the current row is left out);
+       * or `{ from }` to pick a row of another master, e.g. the Area of a Sub-Area (inactive ones are marked).
+       */
+      options:
+        | { value: number; label: string }[]
+        | { self: (row: Row) => string }
+        | { from: { key: string; apiPath: string; label: (row: MasterRow & Record<string, string>) => string } };
       /** Shown for the empty choice. Present = optional field, empty is sent as null. */
       emptyLabel?: string;
       /** Initial value on the create form. */

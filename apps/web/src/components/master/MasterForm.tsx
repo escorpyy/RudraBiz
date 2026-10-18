@@ -85,7 +85,14 @@ export default function MasterForm<Row extends MasterRow>({ cfg, initial }: { cf
         <p className="mb-2 text-xs text-slate-500">{f.hint}</p>
         <div className="relative">
           {Icon && <Icon size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500" />}
-          <input id={f.name} placeholder={f.placeholder} className={`${inputCls} ${Icon ? "pl-10" : "pl-3.5"}`} {...register(f.name)} />
+          <input
+            id={f.name}
+            placeholder={f.placeholder}
+            inputMode={f.inputMode}
+            className={`${inputCls} ${Icon ? "pl-10" : "pl-3.5"} ${f.suffix ? "pr-9" : ""}`}
+            {...register(f.name)}
+          />
+          {f.suffix && <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">{f.suffix}</span>}
         </div>
         {err && <p className="mt-1 text-xs text-rose-600">{err}</p>}
       </div>

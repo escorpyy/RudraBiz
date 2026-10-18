@@ -25,6 +25,10 @@ export type FieldDef =
       placeholder?: string;
       icon?: LucideIcon;
       required?: boolean;
+      /** Mobile keyboard hint; use "decimal" for amounts and rates (the value stays a string, never a float). */
+      inputMode?: "text" | "decimal" | "numeric";
+      /** Short unit shown inside the input on the right, e.g. "%". */
+      suffix?: string;
     }
   | { kind: "status"; label: string; hint: string };
 

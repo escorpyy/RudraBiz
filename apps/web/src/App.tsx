@@ -1,9 +1,9 @@
 import { Route, Routes } from "react-router";
 import AppShell from "./components/layout/AppShell";
 import RequireAuth from "./components/RequireAuth";
-import AgentDetailPage from "./modules/agents/AgentDetailPage";
-import AgentFormPage from "./modules/agents/AgentFormPage";
-import AgentsPage from "./modules/agents/AgentsPage";
+import { masterRoutes } from "./components/master/masterRoutes";
+import { agentsConfig } from "./modules/agents/config";
+import { stockCategoriesConfig } from "./modules/stockCategories/config";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import NotMigrated from "./pages/NotMigrated";
@@ -16,10 +16,8 @@ export default function App() {
         <Route element={<AppShell />}>
           <Route index element={<HomePage />} />
           {/* Migrated modules are added here, one per patch. */}
-          <Route path="master/agents" element={<AgentsPage />} />
-          <Route path="master/agents/new" element={<AgentFormPage />} />
-          <Route path="master/agents/:id" element={<AgentDetailPage />} />
-          <Route path="master/agents/:id/edit" element={<AgentFormPage />} />
+          {masterRoutes(agentsConfig)}
+          {masterRoutes(stockCategoriesConfig)}
           <Route path="*" element={<NotMigrated />} />
         </Route>
       </Route>

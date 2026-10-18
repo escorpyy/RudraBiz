@@ -15,7 +15,9 @@
     "./schemas/stockCategory": "./src/schemas/stockCategory.ts",
     "./schemas/taxRate": "./src/schemas/taxRate.ts",
     "./schemas/productGroup": "./src/schemas/productGroup.ts",
-    "./schemas/area": "./src/schemas/area.ts"
+    "./schemas/area": "./src/schemas/area.ts",
+    "./schemas/unit": "./src/schemas/unit.ts",
+    "./schemas/location": "./src/schemas/location.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

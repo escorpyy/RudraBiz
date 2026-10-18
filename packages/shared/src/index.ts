@@ -7,3 +7,5 @@ export * from "./schemas/stockCategory";
 export * from "./schemas/taxRate";
 export * from "./schemas/productGroup";
 export * from "./schemas/area";
+export * from "./schemas/unit";
+export * from "./schemas/location";

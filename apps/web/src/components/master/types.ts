@@ -16,7 +16,7 @@ export interface ColumnDef<Row> {
 }
 
 /** Form inputs a master can declare. Add a kind here when a master needs one (number, select, ...). */
-export type FieldDef =
+export type FieldDef<Row = never> =
   | {
       kind: "text";
       name: string;
@@ -29,6 +29,20 @@ export type FieldDef =
       inputMode?: "text" | "decimal" | "numeric";
       /** Short unit shown inside the input on the right, e.g. "%". */
       suffix?: string;
+    }
+  | {
+      kind: "select";
+      name: string;
+      label: string;
+      hint: string;
+      required?: boolean;
+      icon?: LucideIcon;
+      /** Static choices, or `{ self: label }` to pick another row of this same master (the current row is left out). */
+      options: { value: number; label: string }[] | { self: (row: Row) => string };
+      /** Shown for the empty choice. Present = optional field, empty is sent as null. */
+      emptyLabel?: string;
+      /** Initial value on the create form. */
+      defaultValue?: number;
     }
   | { kind: "status"; label: string; hint: string };
 
@@ -60,7 +74,7 @@ export interface MasterConfig<Row extends MasterRow, Detail extends Row = Row> {
 
   /** Shared Zod schema, used as the form resolver. */
   schema: ZodTypeAny;
-  fields: FieldDef[];
+  fields: FieldDef<Row>[];
   /** Optional side panel on the form page. */
   infoPanel?: ReactNode;
 

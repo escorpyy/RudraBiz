@@ -27,7 +27,11 @@ export interface CrudSuiteOptions {
   update: (n: number) => { body: Body; expect: Body };
   /** Default "code". */
   sortKey?: string;
+  /** Module-specific tests, run inside the same describe (same harness, same cleanup). */
+  extra?: (t: { h: () => Harness; create: (body: Body) => Promise<Row> }) => void;
 }
+
+type Harness = Awaited<ReturnType<typeof createHarness>>;
 
 /**
  * Behaviour every company-scoped master must have: roles, validation, unique conflicts
@@ -36,7 +40,7 @@ export interface CrudSuiteOptions {
  */
 export function describeCrud(o: CrudSuiteOptions) {
   describe.skipIf(!process.env.DATABASE_URL)(`${o.path} CRUD (real Postgres)`, () => {
-    let h: Awaited<ReturnType<typeof createHarness>>;
+    let h: Harness;
     let n = 0;
     const next = (over?: Body) => o.make(++n, over);
     const upd = () => o.update(++n);
@@ -142,6 +146,8 @@ export function describeCrud(o: CrudSuiteOptions) {
       expect((await h.as("accountant").get(`${o.path}/${a.id}`)).status).toBe(404);
       expect((await h.as("accountant").delete(`${o.path}/${a.id}`)).status).toBe(404);
     });
+
+    o.extra?.({ h: () => h, create: async (body) => (await h.as("admin").post(o.path, body)).body as Row });
 
     it("records who made each change in the audit log", async () => {
       const a = (await h.as("accountant").post(o.path, next())).body as Row;

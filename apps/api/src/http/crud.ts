@@ -6,7 +6,7 @@ import { masterListQuerySchema } from "@ntcas/shared";
 import { requireRole, type CompanyContext, type Role } from "../auth/companyContext";
 import type { Db } from "../db/client";
 import { withTx } from "../db/tx";
-import { notFound } from "./errors";
+import { conflict, notFound } from "./errors";
 import { orConflict, type UniqueRule } from "./pg";
 import { validate } from "./validate";
 
@@ -31,6 +31,11 @@ export interface CrudConfig<Row extends { id: number }, Extra extends object> {
   unique: UniqueRule[];
   /** Roles allowed to write besides ADMIN. Default ACCOUNTANT (so ACCOUNTANT and ADMIN). */
   writeRole?: Role;
+  /**
+   * Runs before a delete. Return a message to refuse it with a 409 (e.g. "this group has 3 sub-groups"),
+   * or null to allow it. Use for rules the FK would only report as a generic "in use" error.
+   */
+  deleteGuard?: (db: Db, row: Row, ctx: CompanyContext) => Promise<string | null>;
   /** Extra data merged into GET /:id (e.g. records tagged to this one). */
   detail?: (db: Db, row: Row, ctx: CompanyContext) => Promise<Extra>;
 }
@@ -106,6 +111,12 @@ export function crudRouter<Row extends { id: number }, Extra extends object = Re
 
   r.delete("/:id", writer, validate({ params: idParams }), async (req, res) => {
     const { id } = req.valid.params as z.infer<typeof idParams>;
+    if (cfg.deleteGuard) {
+      const row = await findRow(req.ctx.companyId, id);
+      if (!row) throw notFound(cfg.entity);
+      const refusal = await cfg.deleteGuard(db, row, req.ctx);
+      if (refusal) throw conflict(refusal);
+    }
     await withTx(db, req.appUser.id, async (tx) => {
       const deleted = await tx
         .delete(t)

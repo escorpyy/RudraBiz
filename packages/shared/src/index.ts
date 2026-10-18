@@ -4,3 +4,6 @@ export * from "./enums";
 export * from "./schemas/agent";
 export * from "./schemas/master";
 export * from "./schemas/stockCategory";
+export * from "./schemas/taxRate";
+export * from "./schemas/productGroup";
+export * from "./schemas/area";

@@ -12,7 +12,10 @@
     "./enums": "./src/enums.ts",
     "./schemas/agent": "./src/schemas/agent.ts",
     "./schemas/master": "./src/schemas/master.ts",
-    "./schemas/stockCategory": "./src/schemas/stockCategory.ts"
+    "./schemas/stockCategory": "./src/schemas/stockCategory.ts",
+    "./schemas/taxRate": "./src/schemas/taxRate.ts",
+    "./schemas/productGroup": "./src/schemas/productGroup.ts",
+    "./schemas/area": "./src/schemas/area.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

@@ -68,7 +68,8 @@ export async function createHarness() {
     const companyIds = [companyA, companyB];
     const users = Object.values(userIds);
     // module tests register cleanups for their own tables through `onClose`
-    for (const fn of closers) await fn(companyIds).catch(() => {});
+    // last registered first, so rows that depend on others (sub-groups) go before their parents
+    for (const fn of [...closers].reverse()) await fn(companyIds).catch(() => {});
     await db.delete(schema.userCompanyAccess).where(inArray(schema.userCompanyAccess.userId, users));
     await db.delete(schema.auditLog).where(inArray(schema.auditLog.changedBy, users));
     await db.delete(schema.user).where(inArray(schema.user.id, users));

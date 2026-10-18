@@ -7,6 +7,9 @@ import { requireAuth } from "./auth/session";
 import type { Db } from "./db/client";
 import { errorHandler, notFoundHandler } from "./http/errorHandler";
 import { agentsRouter } from "./modules/agents/agents.router";
+import { areasRouter } from "./modules/areas/areas.router";
+import { productGroupsRouter } from "./modules/productGroups/productGroups.router";
+import { taxRatesRouter } from "./modules/taxRates/taxRates.router";
 import { stockCategoriesRouter } from "./modules/stockCategories/stockCategories.router";
 import { meRouter } from "./routes/me";
 
@@ -42,6 +45,9 @@ export function createApp({ webOrigin, db, auth }: AppDeps) {
   app.use("/api/me", ...authed, meRouter(db));
   app.use("/api/agents", ...scoped, agentsRouter(db));
   app.use("/api/stock-categories", ...scoped, stockCategoriesRouter(db));
+  app.use("/api/tax-rates", ...scoped, taxRatesRouter(db));
+  app.use("/api/product-groups", ...scoped, productGroupsRouter(db));
+  app.use("/api/areas", ...scoped, areasRouter(db));
   // Feature routers are mounted here with `scoped`, one per migrated module.
 
   app.use(notFoundHandler);

@@ -17,7 +17,9 @@
     "./schemas/productGroup": "./src/schemas/productGroup.ts",
     "./schemas/area": "./src/schemas/area.ts",
     "./schemas/unit": "./src/schemas/unit.ts",
-    "./schemas/location": "./src/schemas/location.ts"
+    "./schemas/location": "./src/schemas/location.ts",
+    "./schemas/subArea": "./src/schemas/subArea.ts",
+    "./schemas/productSubGroup": "./src/schemas/productSubGroup.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

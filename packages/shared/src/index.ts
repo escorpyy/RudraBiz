@@ -9,3 +9,5 @@ export * from "./schemas/productGroup";
 export * from "./schemas/area";
 export * from "./schemas/unit";
 export * from "./schemas/location";
+export * from "./schemas/subArea";
+export * from "./schemas/productSubGroup";

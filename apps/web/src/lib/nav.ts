@@ -44,6 +44,7 @@ export const NAV_ITEMS: NavNode[] = [
       { label: "Location Master", href: "/master/locations" },
       { label: "Bill Terms Master", href: "/master/bill-terms" },
       { label: "Area Master", href: "/master/areas" },
+      { label: "Sub-Area Master", href: "/master/sub-areas" },
       { label: "Agent Master", href: "/master/agents" },
       { label: "Narration Master", href: "/master/narrations" },
       { label: "Fiscal Year Master", href: "/master/fiscal-years" },

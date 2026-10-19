@@ -176,7 +176,7 @@ export const NAV_ITEMS: NavNode[] = [
     label: "Setup",
     icon: SlidersHorizontal,
     children: [
-      { label: "Company", href: "/setup/company" },
+      { label: "Company", href: "/master/companies" },
       { label: "Financial Year", href: "/setup/financial-year" },
       { label: "Accounting", href: "/setup/accounting" },
       { label: "Chart of Accounts", href: "/setup/chart-of-accounts" },

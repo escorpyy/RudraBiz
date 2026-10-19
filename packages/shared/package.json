@@ -21,7 +21,8 @@
     "./schemas/subArea": "./src/schemas/subArea.ts",
     "./schemas/productSubGroup": "./src/schemas/productSubGroup.ts",
     "./schemas/accountGroup": "./src/schemas/accountGroup.ts",
-    "./schemas/accountSubGroup": "./src/schemas/accountSubGroup.ts"
+    "./schemas/accountSubGroup": "./src/schemas/accountSubGroup.ts",
+    "./schemas/company": "./src/schemas/company.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

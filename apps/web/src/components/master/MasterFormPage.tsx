@@ -1,6 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import { Link, Navigate, useParams } from "react-router";
-import { useCanWrite } from "../../lib/useCanWrite";
+import { useCreateAccess, useRowAccess } from "../../lib/useWriteAccess";
 import MasterForm from "./MasterForm";
 import { useMasterOne } from "./masterApi";
 import type { MasterConfig, MasterRow } from "./types";
@@ -9,11 +9,14 @@ import type { MasterConfig, MasterRow } from "./types";
 export default function MasterFormPage<Row extends MasterRow>({ cfg }: { cfg: MasterConfig<Row> }) {
   const params = useParams();
   const id = params.id ? Number(params.id) : undefined;
-  const canWrite = useCanWrite();
+  const create = useCreateAccess(cfg);
+  const rowAccess = useRowAccess(cfg);
   const { data: row, isLoading, error } = useMasterOne<Row>(cfg, id);
   const back = id ? `${cfg.basePath}/${id}` : cfg.basePath;
 
-  if (!canWrite) return <Navigate to={back} replace />;
+  // editing waits for the row (its own access rule may depend on it); creating waits for the create rule
+  if (!id && create.loading) return <div className="text-sm text-slate-500">Loading...</div>;
+  if (id ? row && !rowAccess(row) : !create.allowed) return <Navigate to={back} replace />;
 
   return (
     <div>

@@ -29,6 +29,8 @@ export type FieldDef<Row = never> =
       inputMode?: "text" | "decimal" | "numeric";
       /** Short unit shown inside the input on the right, e.g. "%". */
       suffix?: string;
+      /** Initial value on the create form. */
+      defaultValue?: string;
     }
   | {
       kind: "select";
@@ -50,6 +52,8 @@ export type FieldDef<Row = never> =
       /** Initial value on the create form. */
       defaultValue?: number | string;
     }
+  | { kind: "checkbox"; name: string; label: string; hint: string }
+  | { kind: "section"; title: string }
   | { kind: "status"; label: string; hint: string };
 
 /**
@@ -81,6 +85,15 @@ export interface MasterConfig<Row extends MasterRow, Detail extends Row = Row> {
   /** Shared Zod schema, used as the form resolver. */
   schema: ZodTypeAny;
   fields: FieldDef<Row>[];
+  /**
+   * Write access that is not "my role in the selected company" (the Company master: you may manage a
+   * company only if you are its administrator). Default: ACCOUNTANT or ADMIN of the selected company.
+   * The server decides in the end; these only decide which buttons are shown.
+   */
+  canCreate?: (rows: Row[]) => boolean;
+  canWriteRow?: (row: Row) => boolean;
+  /** Other TanStack Query key roots to refresh after a save or delete (e.g. "me" for the company switcher). */
+  alsoInvalidate?: string[];
   /** Optional side panel on the form page. */
   infoPanel?: ReactNode;
 

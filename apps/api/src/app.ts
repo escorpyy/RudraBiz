@@ -13,6 +13,7 @@ import { productSubGroupsRouter } from "./modules/productSubGroups/productSubGro
 import { subAreasRouter } from "./modules/subAreas/subAreas.router";
 import { accountGroupsRouter } from "./modules/accountGroups/accountGroups.router";
 import { accountSubGroupsRouter } from "./modules/accountSubGroups/accountSubGroups.router";
+import { companiesRouter } from "./modules/companies/companies.router";
 import { areasRouter } from "./modules/areas/areas.router";
 import { productGroupsRouter } from "./modules/productGroups/productGroups.router";
 import { taxRatesRouter } from "./modules/taxRates/taxRates.router";
@@ -49,6 +50,8 @@ export function createApp({ webOrigin, db, auth }: AppDeps) {
   const authed = [requireAuth(auth, db)];
   const scoped = [...authed, companyContext(db)];
   app.use("/api/me", ...authed, meRouter(db));
+  // the tenant registry: behind sign-in only, because it is what fills the company switcher
+  app.use("/api/companies", ...authed, companiesRouter(db));
   app.use("/api/agents", ...scoped, agentsRouter(db));
   app.use("/api/stock-categories", ...scoped, stockCategoriesRouter(db));
   app.use("/api/tax-rates", ...scoped, taxRatesRouter(db));

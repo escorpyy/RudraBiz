@@ -13,3 +13,4 @@ export * from "./schemas/subArea";
 export * from "./schemas/productSubGroup";
 export * from "./schemas/accountGroup";
 export * from "./schemas/accountSubGroup";
+export * from "./schemas/company";

@@ -23,3 +23,6 @@ export type ValuationMethod = (typeof VALUATION_METHODS)[number];
 
 export const DEPRECIATION_METHODS = ["STRAIGHT_LINE", "WRITTEN_DOWN_VALUE"] as const;
 export type DepreciationMethod = (typeof DEPRECIATION_METHODS)[number];
+
+export const BUSINESS_TYPES = ["SOLE_PROPRIETORSHIP", "PARTNERSHIP", "PRIVATE_LIMITED", "PUBLIC_LIMITED", "OTHER"] as const;
+export type BusinessType = (typeof BUSINESS_TYPES)[number];

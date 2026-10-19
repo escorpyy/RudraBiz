@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, useReactTable } from "@tanstack/react-table";
 import { ApiError } from "../../lib/api";
-import { useCanWrite } from "../../lib/useCanWrite";
+import { useCreateAccess, useRowAccess } from "../../lib/useWriteAccess";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import StatCard from "../shared/StatCard";
 import StatusBadge from "../shared/StatusBadge";
@@ -22,8 +22,10 @@ type StatusFilter = "ALL" | "ACTIVE" | "INACTIVE";
 /** List page for any master: stats, search, status filter, paging, row actions, selection + bulk actions. */
 export default function MasterListPage<Row extends MasterRow>({ cfg }: { cfg: MasterConfig<Row> }) {
   const qc = useQueryClient();
-  const canWrite = useCanWrite();
   const { data, isLoading, error } = useMasterList<Row>(cfg);
+  const canCreate = useCreateAccess(cfg).allowed;
+  const rowAccess = useRowAccess(cfg);
+  const canWrite = canCreate || (data ?? []).some(rowAccess); // anything to select or act on
   const del = useMasterDelete(cfg);
   const { runBulkPatch, runBulkDelete, running } = useBulkApi(cfg.apiPath);
 
@@ -109,7 +111,7 @@ export default function MasterListPage<Row extends MasterRow>({ cfg }: { cfg: Ma
     await qc.invalidateQueries({ queryKey: [cfg.key] });
   }
   function openContextMenu(e: React.MouseEvent, row: Row, index: number) {
-    if (!canWrite) return;
+    if (!rowAccess(row)) return;
     e.preventDefault();
     setContextRow(row);
     setContextIndex(index);
@@ -127,7 +129,7 @@ export default function MasterListPage<Row extends MasterRow>({ cfg }: { cfg: Ma
           <h1 className="text-2xl font-bold text-slate-900">{cfg.title}</h1>
           <p className="mt-1 text-sm text-slate-500">{cfg.subtitle}</p>
         </div>
-        {canWrite && (
+        {canCreate && (
           <Link to={`${cfg.basePath}/new`} className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-hover">
             <Plus size={16} /> {cfg.newLabel}
           </Link>
@@ -239,7 +241,7 @@ export default function MasterListPage<Row extends MasterRow>({ cfg }: { cfg: Ma
                   <td className="px-5 py-3.5">
                     <div className="flex items-center justify-end gap-1.5">
                       <Link to={`${cfg.basePath}/${row.original.id}`} title="View" className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"><Eye size={16} /></Link>
-                      {canWrite && (
+                      {rowAccess(row.original) && (
                         <>
                           <Link to={`${cfg.basePath}/${row.original.id}/edit`} title="Edit" className="rounded-md p-1.5 text-brand hover:bg-blue-50"><Pencil size={16} /></Link>
                           <button

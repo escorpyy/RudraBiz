@@ -12,9 +12,11 @@ const inputCls = "w-full rounded-lg border border-slate-200 py-2.5 pr-3.5 text-s
 function defaultsFor<Row extends MasterRow>(cfg: MasterConfig<Row>, initial?: Row) {
   const v: Record<string, unknown> = {};
   for (const f of cfg.fields) {
+    if (f.kind === "section") continue;
     if (f.kind === "status") v.isActive = initial?.isActive ?? true;
+    else if (f.kind === "checkbox") v[f.name] = Boolean((initial as unknown as Record<string, unknown> | undefined)?.[f.name] ?? false);
     else if (f.kind === "select") v[f.name] = (initial as unknown as Record<string, unknown> | undefined)?.[f.name] ?? f.defaultValue ?? "";
-    else v[f.name] = (initial as unknown as Record<string, unknown> | undefined)?.[f.name] ?? "";
+    else v[f.name] = (initial as unknown as Record<string, unknown> | undefined)?.[f.name] ?? f.defaultValue ?? "";
   }
   return v;
 }
@@ -56,6 +58,24 @@ export default function MasterForm<Row extends MasterRow>({ cfg, initial }: { cf
   }
 
   function renderField(f: FieldDef<Row>) {
+    if (f.kind === "section") {
+      return (
+        <h3 key={`section-${f.title}`} className="border-b border-slate-200 pb-2 pt-3 text-sm font-semibold text-slate-900 sm:col-span-2">
+          {f.title}
+        </h3>
+      );
+    }
+    if (f.kind === "checkbox") {
+      return (
+        <label key={f.name} htmlFor={f.name} className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 px-3.5 py-3">
+          <input id={f.name} type="checkbox" className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand" {...register(f.name)} />
+          <span>
+            <span className="block text-sm font-medium text-slate-800">{f.label}</span>
+            <span className="block text-xs text-slate-500">{f.hint}</span>
+          </span>
+        </label>
+      );
+    }
     if (f.kind === "select") {
       return <SelectField key={f.name} cfg={cfg} field={f} excludeId={initial?.id} register={register} error={errors[f.name]?.message as string | undefined} />;
     }

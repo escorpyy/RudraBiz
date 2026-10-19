@@ -2,7 +2,7 @@ import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { ApiError } from "../../lib/api";
-import { useCanWrite } from "../../lib/useCanWrite";
+import { useRowAccess } from "../../lib/useWriteAccess";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import StatusBadge from "../shared/StatusBadge";
 import { useMasterDelete, useMasterOne } from "./masterApi";
@@ -12,7 +12,7 @@ import type { MasterConfig, MasterRow } from "./types";
 export default function MasterDetailPage<Row extends MasterRow, Detail extends Row>({ cfg }: { cfg: MasterConfig<Row, Detail> }) {
   const id = Number(useParams().id);
   const navigate = useNavigate();
-  const canWrite = useCanWrite();
+  const rowAccess = useRowAccess(cfg);
   const { data: row, isLoading, error } = useMasterOne<Detail>(cfg, id);
   const del = useMasterDelete(cfg);
   const [confirm, setConfirm] = useState(false);
@@ -57,7 +57,7 @@ export default function MasterDetailPage<Row extends MasterRow, Detail extends R
           <Link to={cfg.basePath} className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
             <ArrowLeft size={16} /> Back
           </Link>
-          {canWrite && (
+          {rowAccess(current) && (
             <>
               <Link to={`${cfg.basePath}/${current.id}/edit`} className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-hover">
                 <Pencil size={16} /> Edit
